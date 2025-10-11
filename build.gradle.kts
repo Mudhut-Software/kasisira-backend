@@ -40,6 +40,7 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
+	implementation("me.paulschwarz:spring-dotenv:4.0.0")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
