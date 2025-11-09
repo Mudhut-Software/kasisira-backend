@@ -2,10 +2,14 @@ package com.mudhut.software.kasisira.profiles.controllers
 
 import com.mudhut.software.kasisira.email.EmailService
 import com.mudhut.software.kasisira.profiles.entities.TokenType
+import com.mudhut.software.kasisira.profiles.models.request.LoginRequest
+import com.mudhut.software.kasisira.profiles.models.request.RefreshTokenRequest
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
-import com.mudhut.software.kasisira.profiles.models.response.UserResponse
+import com.mudhut.software.kasisira.profiles.models.response.TokenResponse
+import com.mudhut.software.kasisira.profiles.services.AuthService
 import com.mudhut.software.kasisira.profiles.services.UserService
 import com.mudhut.software.kasisira.profiles.services.VerificationService
+import jakarta.servlet.http.HttpServletRequest
 import jakarta.validation.Valid
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -22,12 +26,15 @@ class AuthController {
     private lateinit var userService: UserService
 
     @Autowired
+    private lateinit var authService: AuthService
+
+    @Autowired
     private lateinit var verificationService: VerificationService
 
     @Autowired
     private lateinit var emailService: EmailService
 
-    @Value($$"${app.frontend.url}")
+    @Value("\${app.frontend.url}")
     private lateinit var frontendUrl: String
 
     @PostMapping("/register")
@@ -122,5 +129,45 @@ class AuthController {
                 )
             )
         }
+    }
+
+    @PostMapping("/login")
+    fun login(
+        @Valid @RequestBody request: LoginRequest,
+        httpRequest: HttpServletRequest
+    ): ResponseEntity<TokenResponse> {
+        val tokenResponse = authService.login(request, httpRequest)
+        return ResponseEntity.ok(tokenResponse)
+    }
+
+    @PostMapping("/refresh")
+    fun refreshToken(
+        @Valid @RequestBody request: RefreshTokenRequest,
+        httpRequest: HttpServletRequest
+    ): ResponseEntity<TokenResponse> {
+        val tokenResponse = authService.refreshToken(request.refreshToken, httpRequest)
+        return ResponseEntity.ok(tokenResponse)
+    }
+
+    @PostMapping("/logout")
+    fun logout(@Valid @RequestBody request: RefreshTokenRequest): ResponseEntity<Map<String, Any>> {
+        authService.logout(request.refreshToken)
+        return ResponseEntity.ok(
+            mapOf(
+                "success" to true,
+                "message" to "Logged out successfully"
+            )
+        )
+    }
+
+    @PostMapping("/logout-all")
+    fun logoutAll(@RequestParam userId: Long): ResponseEntity<Map<String, Any>> {
+        authService.logoutAll(userId)
+        return ResponseEntity.ok(
+            mapOf(
+                "success" to true,
+                "message" to "Logged out from all devices successfully"
+            )
+        )
     }
 }
