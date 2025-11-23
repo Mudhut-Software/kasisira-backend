@@ -45,10 +45,10 @@ class AuthServiceImpl : AuthService {
 
     override fun login(request: LoginRequest, httpRequest: HttpServletRequest): TokenResponse {
         // Find user by email or username
-        val user = userRepository.findByEmail(request.emailOrUsername)
+        val user = userRepository.findByEmail(request.email)
             .orElseGet {
-                userRepository.findByUsername(request.emailOrUsername)
-                    .orElseThrow { UserNotFoundException("User not found with email or username: ${request.emailOrUsername}") }
+                userRepository.findByUsername(request.email)
+                    .orElseThrow { UserNotFoundException("User not found with email or username: ${request.email}") }
             }
 
         // Check if user is active

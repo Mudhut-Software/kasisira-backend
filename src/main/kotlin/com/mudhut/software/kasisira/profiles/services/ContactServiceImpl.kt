@@ -26,7 +26,7 @@ class ContactServiceImpl : ContactService {
     private lateinit var contactMapper: ContactMapper
 
     companion object {
-        private const val PHONE_PATTERN = "^\\+?[1-9]\\d{1,14}$"
+        private const val PHONE_PATTERN = "^\\+[1-9]\\d{1,14}$"
     }
 
     override fun findById(id: Long): ContactResponse {

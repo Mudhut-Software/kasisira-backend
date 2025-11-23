@@ -76,14 +76,14 @@ class SecurityConfig {
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
             .authorizeHttpRequests { authorize ->
                 authorize
-                    // Public endpoints
+                    // Public endpoints (paths are relative to context-path, so exclude /api prefix)
                     .requestMatchers(
-                        "/api/v1/auth/register",
-                        "/api/v1/auth/login",
-                        "/api/v1/auth/refresh",
-                        "/api/v1/auth/verify-email",
-                        "/api/v1/auth/resend-verification",
-                        "/api/v1/auth/check-email-verified",
+                        "/v1/auth/register",
+                        "/v1/auth/login",
+                        "/v1/auth/refresh",
+                        "/v1/auth/verify-email",
+                        "/v1/auth/resend-verification",
+                        "/v1/auth/check-email-verified",
                         "/oauth2/**",
                         "/error",
                         "/actuator/health"

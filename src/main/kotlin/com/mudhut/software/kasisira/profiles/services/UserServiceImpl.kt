@@ -41,7 +41,7 @@ class UserServiceImpl : UserService {
 
     companion object {
         private const val EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
-        private const val PHONE_PATTERN = "^\\+?[1-9]\\d{1,14}$"
+        private const val PHONE_PATTERN = "^\\+[1-9]\\d{1,14}$"
     }
 
     override fun findById(id: Long): UserResponse {
@@ -159,7 +159,8 @@ class UserServiceImpl : UserService {
                 password = "", // No password for social login
                 provider = request.provider,
                 providerId = request.providerId,
-                imageUrl = request.imageUrl
+                imageUrl = request.imageUrl,
+                phoneNumber = null // Social logins don't require phone
             ),
             "" // No password hash for social login
         ).copy(
