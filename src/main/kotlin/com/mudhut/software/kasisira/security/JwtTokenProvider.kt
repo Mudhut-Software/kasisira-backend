@@ -2,6 +2,7 @@ package com.mudhut.software.kasisira.security
 
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
+import io.jsonwebtoken.security.SignatureException
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
@@ -76,7 +77,7 @@ class JwtTokenProvider {
                 .build()
                 .parseSignedClaims(token)
             return true
-        } catch (ex: SecurityException) {
+        } catch (ex: SignatureException) {
             logger.error("Invalid JWT signature")
         } catch (ex: MalformedJwtException) {
             logger.error("Invalid JWT token")
