@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #4CAF50;
+            margin: 0;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 20px 0;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .mobile-link {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 5px;
+        }
+        .mobile-link a {
+            color: #2e7d32;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 th:text="${appName}">App Name</h1>
+        </div>
+
+        <div class="content">
+            <h2>Welcome, <span th:text="${username}">User</span>!</h2>
+
+            <p>Thank you for registering with <span th:text="${appName}">App Name</span>. To complete your registration and activate your account, please verify your email address.</p>
+
+            <div style="text-align: center;">
+                <a th:href="${verificationLink}" class="button">Verify Email Address</a>
+            </div>
+
+            <p style="margin-top: 20px;">Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #666; font-size: 14px;">
+                <a th:href="${verificationLink}" th:text="${verificationLink}">Verification Link</a>
+            </p>
+
+            <div class="mobile-link">
+                <p style="margin: 0;"><strong>Using our mobile app?</strong></p>
+                <p style="margin: 5px 0 0 0;">
+                    <a th:href="${mobileDeepLink}">Tap here to verify in the app</a>
+                </p>
+            </div>
+
+            <p style="margin-top: 20px; font-size: 14px; color: #666;">
+                <strong>Note:</strong> This verification link will expire in 24 hours. If you didn't create an account with <span th:text="${appName}">App Name</span>, please ignore this email.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>After verification, you can:</p>
+            <p>
+                <a th:href="${loginLink}">Login via Web</a> |
+                Open the mobile app and login
+            </p>
+            <p>&copy; 2024 <span th:text="${appName}">App Name</span>. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

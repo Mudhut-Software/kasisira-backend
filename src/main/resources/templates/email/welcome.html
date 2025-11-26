@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to Our Platform</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #4CAF50;
+            margin: 0;
+        }
+        .content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 30px;
+            margin: 20px 0;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #45a049;
+        }
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        .features {
+            margin: 20px 0;
+        }
+        .features li {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 th:text="${appName}">App Name</h1>
+        </div>
+
+        <div class="content">
+            <h2>Welcome aboard, <span th:text="${username}">User</span>!</h2>
+
+            <p>Your email has been successfully verified and your account is now active! We're excited to have you as part of our community.</p>
+
+            <div style="text-align: center;">
+                <a th:href="${loginLink}" class="button">Get Started - Login Now</a>
+            </div>
+
+            <div class="features">
+                <h3>What's next?</h3>
+                <ul>
+                    <li>Complete your profile to personalize your experience</li>
+                    <li>Explore all the features we have to offer</li>
+                    <li>Connect with other users in the community</li>
+                    <li>Access our platform from web or mobile app</li>
+                </ul>
+            </div>
+
+            <p style="margin-top: 20px; padding: 15px; background-color: #e8f5e9; border-radius: 5px; font-size: 14px;">
+                <strong>Need help?</strong> If you have any questions or need assistance, feel free to reach out to our support team at
+                <a th:href="'mailto:' + ${supportEmail}" th:text="${supportEmail}">support@example.com</a>
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>Thank you for choosing <span th:text="${appName}">App Name</span>!</p>
+            <p>&copy; 2024 <span th:text="${appName}">App Name</span>. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>
