@@ -15,6 +15,12 @@
 --     these columns to TIMESTAMPTZ would fail JPA validation.
 --   * Indexes and unique constraints mirror the @Index / unique=true / @Column
 --     annotations on the entities exactly.
+--   * Foreign-key ON DELETE policy: FKs that mirror a JPA CascadeType.ALL /
+--     orphanRemoval relationship (contacts.user_id, refresh_tokens.user_id,
+--     verification_tokens.user_id, property_media.property_id) use ON DELETE
+--     CASCADE. properties.owner_id uses ON DELETE RESTRICT so that deleting
+--     a user with listings fails loudly rather than orphaning or silently
+--     destroying property records.
 
 -- ---------------------------------------------------------------------------
 -- Sequences
@@ -68,7 +74,7 @@ CREATE TABLE contacts (
     updated_at   TIMESTAMP   NOT NULL,
     CONSTRAINT pk_contacts PRIMARY KEY (id),
     CONSTRAINT fk_contacts_user
-        FOREIGN KEY (user_id) REFERENCES users (id)
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_contact_user ON contacts (user_id);
@@ -89,7 +95,7 @@ CREATE TABLE refresh_tokens (
     ip_address  VARCHAR(50),
     CONSTRAINT pk_refresh_tokens PRIMARY KEY (id),
     CONSTRAINT fk_refresh_tokens_user
-        FOREIGN KEY (user_id) REFERENCES users (id)
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX idx_refresh_token         ON refresh_tokens (token);
@@ -110,7 +116,7 @@ CREATE TABLE verification_tokens (
     is_used    BOOLEAN      NOT NULL,
     CONSTRAINT pk_verification_tokens PRIMARY KEY (id),
     CONSTRAINT fk_verification_tokens_user
-        FOREIGN KEY (user_id) REFERENCES users (id)
+        FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
 
 CREATE UNIQUE INDEX idx_token   ON verification_tokens (token);
@@ -149,7 +155,7 @@ CREATE TABLE properties (
     updated_at         TIMESTAMP      NOT NULL,
     CONSTRAINT pk_properties PRIMARY KEY (id),
     CONSTRAINT fk_properties_owner
-        FOREIGN KEY (owner_id) REFERENCES users (id)
+        FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE RESTRICT
 );
 
 CREATE INDEX idx_property_owner        ON properties (owner_id);
@@ -179,7 +185,7 @@ CREATE TABLE property_media (
     updated_at    TIMESTAMP    NOT NULL,
     CONSTRAINT pk_property_media PRIMARY KEY (id),
     CONSTRAINT fk_property_media_property
-        FOREIGN KEY (property_id) REFERENCES properties (id)
+        FOREIGN KEY (property_id) REFERENCES properties (id) ON DELETE CASCADE
 );
 
 CREATE INDEX idx_media_property ON property_media (property_id);
