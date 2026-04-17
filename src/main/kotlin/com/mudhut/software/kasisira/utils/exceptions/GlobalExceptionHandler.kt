@@ -255,6 +255,39 @@ class GlobalExceptionHandler {
             .body(ErrorResponse(ERROR_CODE_REQUEST, "Required request body is missing or malformed"))
     }
 
+    // Property-related exception handlers
+    @ExceptionHandler(PropertyNotFoundException::class)
+    fun handlePropertyNotFoundException(ex: PropertyNotFoundException): ResponseEntity<ErrorResponse> {
+        logger.warn("Property not found: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "Property not found"))
+    }
+
+    @ExceptionHandler(MediaNotFoundException::class)
+    fun handleMediaNotFoundException(ex: MediaNotFoundException): ResponseEntity<ErrorResponse> {
+        logger.warn("Media not found: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "Media not found"))
+    }
+
+    @ExceptionHandler(InvalidPropertyConfigurationException::class)
+    fun handleInvalidPropertyConfigurationException(ex: InvalidPropertyConfigurationException): ResponseEntity<ErrorResponse> {
+        logger.warn("Invalid property configuration: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse(ERROR_CODE_VALIDATION, ex.message ?: "Invalid property configuration"))
+    }
+
+    @ExceptionHandler(UnauthorizedAccessException::class)
+    fun handleUnauthorizedAccessException(ex: UnauthorizedAccessException): ResponseEntity<ErrorResponse> {
+        logger.warn("Unauthorized access: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(ErrorResponse(ERROR_CODE_AUTHORIZATION, ex.message ?: "Unauthorized access"))
+    }
+
     // Generic exception handler (catch-all)
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<ErrorResponse> {

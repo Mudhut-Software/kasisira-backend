@@ -45,3 +45,6 @@ out/
 .env
 .env.example
 SETUP_GUIDE.txt
+
+### Progress Documentation ###
+progress-doc.md
