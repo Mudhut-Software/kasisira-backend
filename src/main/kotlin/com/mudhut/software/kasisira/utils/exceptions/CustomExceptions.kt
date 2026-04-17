@@ -32,3 +32,12 @@ class WeakPasswordException(message: String) : RuntimeException(message)
 class MailSendingException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
 
 class MailerSendException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)
+
+// Property-related exceptions
+class PropertyNotFoundException(message: String) : RuntimeException(message)
+
+class MediaNotFoundException(message: String) : RuntimeException(message)
+
+class InvalidPropertyConfigurationException(message: String) : RuntimeException(message)
+
+class UnauthorizedAccessException(message: String) : RuntimeException(message)

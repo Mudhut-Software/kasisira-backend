@@ -16,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.SecurityFilterChain
+import org.springframework.http.HttpMethod
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -88,6 +89,13 @@ class SecurityConfig {
                         "/error",
                         "/actuator/health"
                     ).permitAll()
+                    // Public property endpoints (GET only for browsing)
+                    .requestMatchers(HttpMethod.GET, "/v1/properties").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/properties/search").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/properties/type/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/properties/listing/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/properties/{id}").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/v1/properties/{propertyId}/media").permitAll()
                     // All other requests require authentication
                     .anyRequest().authenticated()
             }
