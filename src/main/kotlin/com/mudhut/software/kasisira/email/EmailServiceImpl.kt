@@ -80,6 +80,28 @@ class EmailServiceImpl : EmailService {
         }
     }
 
+    override fun sendTemplate(to: String, template: String, variables: Map<String, Any>) {
+        try {
+            val context = Context()
+            // Always expose appName — most templates reference it.
+            context.setVariable("appName", appName)
+            variables.forEach { (key, value) -> context.setVariable(key, value) }
+
+            val htmlContent = templateEngine.process("email/$template", context)
+            val subject = (variables["subject"] as? String) ?: defaultSubjectFor(template)
+            sendHtmlEmail(to, subject, htmlContent)
+        } catch (e: Exception) {
+            throw RuntimeException("Failed to send templated email '$template' to $to", e)
+        }
+    }
+
+    private fun defaultSubjectFor(template: String): String = when (template) {
+        "verification" -> "Verify Your Email - $appName"
+        "password-reset" -> "Reset Your Password - $appName"
+        "welcome" -> "Welcome to $appName!"
+        else -> appName
+    }
+
     private fun sendHtmlEmail(to: String, subject: String, htmlContent: String) {
         try {
             val message: MimeMessage = mailSender.createMimeMessage()
