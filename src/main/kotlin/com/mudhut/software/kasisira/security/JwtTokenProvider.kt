@@ -1,5 +1,8 @@
 package com.mudhut.software.kasisira.security
 
+import com.mudhut.software.kasisira.profiles.entities.RefreshToken
+import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.profiles.repositories.RefreshTokenRepository
 import com.mudhut.software.kasisira.profiles.repositories.UserRoleRepository
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
@@ -10,7 +13,15 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import javax.crypto.SecretKey
+import java.time.LocalDateTime
 import java.util.*
+
+/**
+ * Simple value carrier for the access + refresh token pair returned by
+ * [JwtTokenProvider.issueTokens]. Keeps the non-HTTP-aware phone OTP flow
+ * from having to juggle two return values.
+ */
+data class TokenPair(val accessToken: String, val refreshToken: String)
 
 @Component
 class JwtTokenProvider {
@@ -31,6 +42,9 @@ class JwtTokenProvider {
     // incoming tokens — so this DB hit stays off the request-validation hot path.
     @Autowired
     private lateinit var userRoleRepository: UserRoleRepository
+
+    @Autowired
+    private lateinit var refreshTokenRepository: RefreshTokenRepository
 
     private fun getSigningKey(): SecretKey {
         return Keys.hmacShaKeyFor(jwtSecret.toByteArray())
@@ -57,6 +71,32 @@ class JwtTokenProvider {
             .expiration(expiryDate)
             .signWith(getSigningKey())
             .compact()
+    }
+
+    /**
+     * Issues an access + refresh token pair for [user] and persists the refresh token in
+     * [RefreshTokenRepository] so it can later be redeemed by the refresh flow. This helper
+     * is for non-HTTP-aware callers (e.g. the phone OTP flow) that don't have access to
+     * device info or IP address — those fields are persisted as null. HTTP-aware flows
+     * (email/password login, OAuth success handler) continue to manage persistence
+     * themselves so they can record the User-Agent / remote address.
+     */
+    fun issueTokens(user: User): TokenPair {
+        val accessToken = generateAccessToken(user.id, user.email)
+        val refreshToken = generateRefreshToken(user.id)
+
+        val expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpirationMs / 1000)
+        refreshTokenRepository.save(
+            RefreshToken(
+                token = refreshToken,
+                user = user,
+                expiresAt = expiresAt,
+                deviceInfo = null,
+                ipAddress = null
+            )
+        )
+
+        return TokenPair(accessToken = accessToken, refreshToken = refreshToken)
     }
 
     fun generateRefreshToken(userId: Long): String {
