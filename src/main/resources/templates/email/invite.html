@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${appName}">Kasisira</title>
+</head>
+<body style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;">
+    <h2>You're invited to <span th:text="${orgName}">Org Name</span></h2>
+    <p>An administrator on <span th:text="${orgName}">Org Name</span> has invited you to join their team on <span th:text="${appName}">Kasisira</span> as a manager.</p>
+    <p>
+        <a th:href="${acceptUrl}"
+           style="display:inline-block;background:#2D7FF9;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">
+            Accept invitation
+        </a>
+    </p>
+    <p>If the button doesn't work, paste this link into your browser:</p>
+    <pre th:text="${acceptUrl}" style="background:#f4f4f4;padding:8px;border-radius:4px;font-size:12px;">https://app.kasisira.com/accept-invite?token=...</pre>
+    <p style="color:#666;font-size:14px;">This invitation expires in 7 days.</p>
+</body>
+</html>
