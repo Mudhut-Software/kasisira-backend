@@ -41,3 +41,8 @@ class MediaNotFoundException(message: String) : RuntimeException(message)
 class InvalidPropertyConfigurationException(message: String) : RuntimeException(message)
 
 class UnauthorizedAccessException(message: String) : RuntimeException(message)
+
+// OTP / rate limit exceptions
+class RateLimitedException(message: String) : RuntimeException(message)
+
+class InvalidOtpException(message: String) : RuntimeException(message)

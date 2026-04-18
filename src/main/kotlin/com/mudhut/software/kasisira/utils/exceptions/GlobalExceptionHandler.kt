@@ -34,6 +34,8 @@ class GlobalExceptionHandler {
         private const val ERROR_CODE_REQUEST = "REQUEST_ERROR"
         private const val ERROR_CODE_CONFLICT = "CONFLICT_ERROR"
         private const val ERROR_CODE_TOKEN = "TOKEN_ERROR"
+        private const val ERROR_CODE_RATE_LIMITED = "RATE_LIMITED"
+        private const val ERROR_CODE_OTP = "OTP_ERROR"
     }
 
     // User-related exception handlers
@@ -286,6 +288,23 @@ class GlobalExceptionHandler {
         return ResponseEntity
             .status(HttpStatus.FORBIDDEN)
             .body(ErrorResponse(ERROR_CODE_AUTHORIZATION, ex.message ?: "Unauthorized access"))
+    }
+
+    // OTP / rate-limit exception handlers
+    @ExceptionHandler(RateLimitedException::class)
+    fun handleRateLimitedException(ex: RateLimitedException): ResponseEntity<ErrorResponse> {
+        logger.warn("Rate limited: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.TOO_MANY_REQUESTS)
+            .body(ErrorResponse(ERROR_CODE_RATE_LIMITED, ex.message ?: "Too many requests"))
+    }
+
+    @ExceptionHandler(InvalidOtpException::class)
+    fun handleInvalidOtpException(ex: InvalidOtpException): ResponseEntity<ErrorResponse> {
+        logger.warn("Invalid OTP: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(ErrorResponse(ERROR_CODE_OTP, ex.message ?: "Invalid OTP"))
     }
 
     // Generic exception handler (catch-all)
