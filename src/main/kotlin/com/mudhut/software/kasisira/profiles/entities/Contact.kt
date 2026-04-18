@@ -8,9 +8,11 @@ import org.hibernate.annotations.UpdateTimestamp
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "contacts", indexes = [
-    Index(name = "idx_contact_user", columnList = "user_id")
-])
+@Table(
+    name = "contacts",
+    uniqueConstraints = [UniqueConstraint(name = "uk_contact_phone_number", columnNames = ["phone_number"])],
+    indexes = [Index(name = "idx_contact_user", columnList = "user_id")]
+)
 data class Contact(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
