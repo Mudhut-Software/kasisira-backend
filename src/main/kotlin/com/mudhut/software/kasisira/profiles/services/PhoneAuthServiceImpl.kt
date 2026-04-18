@@ -15,6 +15,7 @@ import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.security.JwtTokenProvider
 import com.mudhut.software.kasisira.utils.exceptions.InvalidOtpException
 import com.mudhut.software.kasisira.utils.exceptions.UserNotFoundException
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.UUID
@@ -29,19 +30,30 @@ class PhoneAuthServiceImpl(
     private val userMapper: UserMapper
 ) : PhoneAuthService {
 
+    private val log = LoggerFactory.getLogger(javaClass)
+
     @Transactional
     override fun requestOtp(request: RequestOtpRequest) {
         val phone = request.phoneNumber.trim()
 
-        // Defence against phone-number enumeration: only issue a LOGIN OTP if a contact
-        // already exists. SIGNUP is always allowed (the whole point is to create the user
-        // on verify). The DTO validates E.164 format; we just trim whitespace at entry.
-        if (request.purpose == OtpPurpose.LOGIN) {
-            contactRepository.findByPhoneNumber(phone)
-                ?: throw UserNotFoundException("No account for this phone.")
+        // Anti-enumeration: for LOGIN, silently succeed when no account exists for the
+        // phone rather than returning a 404. The controller always responds 202, so an
+        // attacker probing phones cannot distinguish "account exists" from "no account"
+        // based on the response alone. SIGNUP always proceeds — the whole point is to
+        // create the user on verify. The DTO validates E.164; we just trim whitespace.
+        when (request.purpose) {
+            OtpPurpose.LOGIN -> {
+                val existing = contactRepository.findByPhoneNumber(phone)
+                if (existing == null) {
+                    log.info("OTP login request for unknown phone; returning 202 without sending")
+                    return
+                }
+                otpService.requestOtp(phone, request.purpose)
+            }
+            OtpPurpose.SIGNUP -> {
+                otpService.requestOtp(phone, request.purpose)
+            }
         }
-
-        otpService.requestOtp(phone, request.purpose)
     }
 
     @Transactional
@@ -57,10 +69,13 @@ class PhoneAuthServiceImpl(
 
         val user = when (request.purpose) {
             OtpPurpose.LOGIN -> {
+                // Defence in depth: if the contact disappeared between requestOtp and
+                // verify (race), surface the same generic InvalidOtpException as a
+                // wrong-code path. Keeps LOGIN failure responses indistinguishable.
                 val contact = contactRepository.findByPhoneNumber(phone)
-                    ?: throw UserNotFoundException("No account for this phone.")
+                    ?: throw InvalidOtpException("Verification failed.")
                 contact.user
-                    ?: throw UserNotFoundException("Contact has no associated user.")
+                    ?: throw InvalidOtpException("Verification failed.")
             }
             OtpPurpose.SIGNUP -> findOrCreate(phone, request.signupHint)
         }

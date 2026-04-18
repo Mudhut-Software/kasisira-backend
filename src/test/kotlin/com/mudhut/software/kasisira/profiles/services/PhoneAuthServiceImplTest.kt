@@ -12,7 +12,6 @@ import com.mudhut.software.kasisira.profiles.repositories.ContactRepository
 import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.security.JwtTokenProvider
 import com.mudhut.software.kasisira.security.TokenPair
-import com.mudhut.software.kasisira.utils.exceptions.UserNotFoundException
 import io.mockk.Runs
 import io.mockk.every
 import io.mockk.impl.annotations.InjectMockKs
@@ -23,7 +22,6 @@ import io.mockk.slot
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 
 @ExtendWith(MockKExtension::class)
@@ -83,16 +81,14 @@ class PhoneAuthServiceImplTest {
     }
 
     @Test
-    fun `requestOtp LOGIN throws UserNotFoundException if no contact exists`() {
-        // Given — defence against phone-number enumeration
+    fun `requestOtp LOGIN returns silently when no contact exists (anti-enumeration)`() {
+        // Given — silent success hides account-existence from phone-probing attackers
         every { contactRepository.findByPhoneNumber(loginPhone) } returns null
 
-        // When/Then
-        assertThrows<UserNotFoundException> {
-            service.requestOtp(RequestOtpRequest(loginPhone, OtpPurpose.LOGIN))
-        }
+        // When — does not throw
+        service.requestOtp(RequestOtpRequest(loginPhone, OtpPurpose.LOGIN))
 
-        // OTP never requested for unknown phone on LOGIN path
+        // Then — OTP never requested for unknown phone on LOGIN path
         verify(exactly = 0) { otpService.requestOtp(any(), any()) }
     }
 
