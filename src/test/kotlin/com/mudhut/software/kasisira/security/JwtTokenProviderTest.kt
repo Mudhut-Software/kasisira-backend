@@ -1,7 +1,13 @@
 package com.mudhut.software.kasisira.security
 
+import com.mudhut.software.kasisira.profiles.entities.RoleName
+import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.profiles.entities.UserRole
+import com.mudhut.software.kasisira.profiles.repositories.UserRoleRepository
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.security.Keys
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -13,6 +19,7 @@ import java.util.*
 class JwtTokenProviderTest {
 
     private lateinit var jwtTokenProvider: JwtTokenProvider
+    private lateinit var userRoleRepository: UserRoleRepository
 
     private val testSecret = "myTestSecretKeyThatIsAtLeast256BitsLongForHS256Algorithm!"
     private val accessTokenExpirationMs = 3600000L // 1 hour
@@ -21,11 +28,16 @@ class JwtTokenProviderTest {
     @BeforeEach
     fun setUp() {
         jwtTokenProvider = JwtTokenProvider()
+        userRoleRepository = mockk()
+
+        // Default: no roles. Individual tests override as needed.
+        every { userRoleRepository.findAllByUserId(any()) } returns emptyList()
 
         // Set private fields using reflection
         ReflectionTestUtils.setField(jwtTokenProvider, "jwtSecret", testSecret)
         ReflectionTestUtils.setField(jwtTokenProvider, "accessTokenExpirationMs", accessTokenExpirationMs)
         ReflectionTestUtils.setField(jwtTokenProvider, "refreshTokenExpirationMs", refreshTokenExpirationMs)
+        ReflectionTestUtils.setField(jwtTokenProvider, "userRoleRepository", userRoleRepository)
     }
 
     @Nested
@@ -80,6 +92,37 @@ class JwtTokenProviderTest {
             val expectedExpiration = Date(beforeGeneration.time + accessTokenExpirationMs)
             // Allow 5 second tolerance
             assertTrue(kotlin.math.abs(expiration!!.time - expectedExpiration.time) < 5000)
+        }
+
+        @Test
+        fun `should include roles claim from UserRoleRepository`() {
+            // Given
+            val userId = 42L
+            val stubUser = mockk<User>(relaxed = true)
+            every { userRoleRepository.findAllByUserId(userId) } returns listOf(
+                UserRole(id = 1L, user = stubUser, roleName = RoleName.TENANT),
+                UserRole(id = 2L, user = stubUser, roleName = RoleName.OWNER)
+            )
+
+            // When
+            val token = jwtTokenProvider.generateAccessToken(userId, "test@example.com")
+            val roles = jwtTokenProvider.getRolesFromToken(token)
+
+            // Then
+            assertEquals(listOf("TENANT", "OWNER"), roles)
+        }
+
+        @Test
+        fun `should emit empty roles claim when user has no roles`() {
+            // Given
+            every { userRoleRepository.findAllByUserId(7L) } returns emptyList()
+
+            // When
+            val token = jwtTokenProvider.generateAccessToken(7L, "test@example.com")
+            val roles = jwtTokenProvider.getRolesFromToken(token)
+
+            // Then
+            assertTrue(roles.isEmpty())
         }
     }
 

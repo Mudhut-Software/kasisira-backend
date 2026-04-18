@@ -19,7 +19,18 @@ class UserPrincipal(
 
     companion object {
         fun create(user: User): UserPrincipal {
-            val authorities = listOf(SimpleGrantedAuthority("ROLE_USER"))
+            return create(user, emptySet())
+        }
+
+        fun create(user: User, roles: Set<String>): UserPrincipal {
+            // Spring Security's hasRole('X') expects a GrantedAuthority of "ROLE_X".
+            // We prefix here so role names stored in the DB stay unprefixed (e.g. "OWNER")
+            // and @PreAuthorize("hasRole('OWNER')") just works.
+            val authorities = if (roles.isEmpty()) {
+                listOf(SimpleGrantedAuthority("ROLE_USER"))
+            } else {
+                roles.map { SimpleGrantedAuthority("ROLE_$it") }
+            }
 
             return UserPrincipal(
                 id = user.id,
@@ -34,6 +45,12 @@ class UserPrincipal(
 
         fun create(user: User, attributes: Map<String, Any>): UserPrincipal {
             val userPrincipal = create(user)
+            userPrincipal.attributes = attributes
+            return userPrincipal
+        }
+
+        fun create(user: User, roles: Set<String>, attributes: Map<String, Any>): UserPrincipal {
+            val userPrincipal = create(user, roles)
             userPrincipal.attributes = attributes
             return userPrincipal
         }

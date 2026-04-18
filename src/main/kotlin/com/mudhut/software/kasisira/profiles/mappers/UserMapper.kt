@@ -4,12 +4,24 @@ import com.mudhut.software.kasisira.profiles.entities.Contact
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
 import com.mudhut.software.kasisira.profiles.models.response.UserResponse
+import com.mudhut.software.kasisira.profiles.repositories.UserRoleRepository
 import org.springframework.stereotype.Component
 
 @Component
-class UserMapper(private val contactMapper: ContactMapper) {
+class UserMapper(
+    private val contactMapper: ContactMapper,
+    private val userRoleRepository: UserRoleRepository
+) {
 
     fun toResponse(user: User): UserResponse {
+        // NOTE: this issues one query per mapped user. If a caller maps many users in a
+        // loop (e.g. a future list-users endpoint that wires through findAllUsers()), this
+        // becomes N+1. Today no such endpoint is wired, but if/when it is, switch to a
+        // batched lookup (e.g. findAllByUserIdIn) and a pre-computed map of userId -> roles.
+        val roles = userRoleRepository.findAllByUserId(user.id)
+            .map { it.roleName.name }
+            .toSet()
+
         return UserResponse(
             id = user.id,
             username = user.username,
@@ -22,7 +34,8 @@ class UserMapper(private val contactMapper: ContactMapper) {
             contacts = user.contacts.map { contactMapper.toResponse(it) },
             createdAt = user.createdAt,
             updatedAt = user.updatedAt,
-            lastLogin = user.lastLogin
+            lastLogin = user.lastLogin,
+            roles = roles
         )
     }
 

@@ -15,5 +15,6 @@ data class UserResponse(
     val contacts: List<ContactResponse>,
     val createdAt: LocalDateTime?,
     val updatedAt: LocalDateTime?,
-    val lastLogin: LocalDateTime?
+    val lastLogin: LocalDateTime?,
+    val roles: Set<String> = emptySet()
 )

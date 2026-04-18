@@ -1,9 +1,11 @@
 package com.mudhut.software.kasisira.security
 
+import com.mudhut.software.kasisira.profiles.repositories.UserRoleRepository
 import io.jsonwebtoken.*
 import io.jsonwebtoken.security.Keys
 import io.jsonwebtoken.security.SignatureException
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
@@ -24,6 +26,12 @@ class JwtTokenProvider {
     @Value("\${app.jwt.refresh-token-expiration-ms}")
     private var refreshTokenExpirationMs: Long = 0
 
+    // Queried once at token issue time only (login / refresh / OAuth success).
+    // JwtAuthenticationFilter does NOT call generateAccessToken — it only validates/parses
+    // incoming tokens — so this DB hit stays off the request-validation hot path.
+    @Autowired
+    private lateinit var userRoleRepository: UserRoleRepository
+
     private fun getSigningKey(): SecretKey {
         return Keys.hmacShaKeyFor(jwtSecret.toByteArray())
     }
@@ -37,10 +45,14 @@ class JwtTokenProvider {
         val now = Date()
         val expiryDate = Date(now.time + accessTokenExpirationMs)
 
+        val roles = userRoleRepository.findAllByUserId(userId)
+            .map { it.roleName.name }
+
         return Jwts.builder()
             .subject(userId.toString())
             .claim("email", email)
             .claim("type", "access")
+            .claim("roles", roles)
             .issuedAt(now)
             .expiration(expiryDate)
             .signWith(getSigningKey())
@@ -102,6 +114,21 @@ class JwtTokenProvider {
             claims["type"] as? String
         } catch (ex: Exception) {
             null
+        }
+    }
+
+    fun getRolesFromToken(token: String): List<String> {
+        return try {
+            val claims = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .payload
+
+            @Suppress("UNCHECKED_CAST")
+            (claims["roles"] as? List<String>) ?: emptyList()
+        } catch (ex: Exception) {
+            emptyList()
         }
     }
 
