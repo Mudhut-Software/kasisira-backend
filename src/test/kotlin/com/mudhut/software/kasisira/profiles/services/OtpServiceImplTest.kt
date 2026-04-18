@@ -93,17 +93,35 @@ class OtpServiceImplTest {
     }
 
     @Test
-    fun `requestOtp throws RateLimitedException when more than 3 requests in the last hour`() {
-        // Given — 4 recent requests exceeds the max of 3
-        every { otpChallengeRepository.countRecent(eq(phone), any()) } returns 4L
+    fun `requestOtp allows the 3rd request in the hour`() {
+        // Given — 2 recent requests, so the 3rd is still within the cap
+        val challengeSlot = slot<OtpChallenge>()
+        every { otpChallengeRepository.countRecent(eq(phone), any()) } returns 2L
+        every { passwordEncoder.encode(any()) } answers { "hashed::${firstArg<String>()}" }
+        every { otpChallengeRepository.save(capture(challengeSlot)) } answers { firstArg() }
+        every { smsSender.send(eq(phone), any()) } just runs
 
-        // When/Then
+        // When
+        otpService.requestOtp(phone, OtpPurpose.LOGIN)
+
+        // Then — boundary: countRecent (2) < RATE_MAX (3), request is allowed
+        verify(exactly = 1) { otpChallengeRepository.save(any()) }
+        verify(exactly = 1) { smsSender.send(phone, any()) }
+    }
+
+    @Test
+    fun `requestOtp throws on the 4th request in the hour`() {
+        // Given — 3 recent requests already; the 4th trips the rate limit
+        every { otpChallengeRepository.countRecent(eq(phone), any()) } returns 3L
+
+        // When/Then — boundary: countRecent (3) >= RATE_MAX (3), request is denied
         assertThrows<RateLimitedException> {
             otpService.requestOtp(phone, OtpPurpose.LOGIN)
         }
 
         verify(exactly = 0) { otpChallengeRepository.save(any()) }
         verify(exactly = 0) { smsSender.send(any(), any()) }
+        verify(exactly = 0) { passwordEncoder.encode(any()) }
     }
 
     @Test
@@ -144,6 +162,12 @@ class OtpServiceImplTest {
         assertThrows<InvalidOtpException> {
             otpService.verifyOtp(phone, "123456", OtpPurpose.LOGIN)
         }
+
+        // Negative: no side effects when the lookup yields nothing
+        verify(exactly = 0) { passwordEncoder.matches(any(), any()) }
+        verify(exactly = 0) { otpChallengeRepository.save(any()) }
+        verify(exactly = 0) { smsSender.send(any(), any()) }
+        verify(exactly = 0) { passwordEncoder.encode(any()) }
     }
 
     @Test

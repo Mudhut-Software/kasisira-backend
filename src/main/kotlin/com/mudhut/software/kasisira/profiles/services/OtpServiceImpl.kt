@@ -68,7 +68,7 @@ class OtpServiceImpl(
         )
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = [InvalidOtpException::class])
     override fun verifyOtp(phoneNumberE164: String, code: String, purpose: OtpPurpose): Boolean {
         val now = LocalDateTime.now(clock)
 
