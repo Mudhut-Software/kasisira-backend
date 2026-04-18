@@ -2,6 +2,7 @@ package com.mudhut.software.kasisira.profiles.services
 
 import com.mudhut.software.kasisira.email.EmailService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
+import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.mappers.UserMapper
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
@@ -40,6 +41,9 @@ class UserServiceImplTest {
 
     @MockK
     private lateinit var emailService: EmailService
+
+    @MockK
+    private lateinit var roleService: RoleService
 
     @InjectMockKs
     private lateinit var userService: UserServiceImpl
@@ -225,6 +229,7 @@ class UserServiceImplTest {
             every { userRepository.save(any()) } returns testUser
             every { verificationService.createVerificationToken(any(), any()) } returns "token123"
             every { emailService.sendVerificationEmail(any(), any(), any()) } just runs
+            every { roleService.grant(any(), RoleName.TENANT) } just runs
             every { userMapper.toResponse(any()) } returns testUserResponse
 
             // When
@@ -235,6 +240,29 @@ class UserServiceImplTest {
             verify { passwordValidator.validatePassword("Password123!") }
             verify { passwordEncoder.encode("Password123!") }
             verify { userRepository.save(any()) }
+        }
+
+        @Test
+        fun `registerUser grants TENANT role after creating the user`() {
+            // Given
+            every { userRepository.existsByEmail(any()) } returns false
+            every { userRepository.existsByUsername(any()) } returns false
+            every { passwordValidator.validatePassword(any()) } just runs
+            every { passwordEncoder.encode(any()) } returns "encodedPassword"
+            every { userMapper.fromRegisterRequestWithContact(any(), any()) } returns testUser
+            every { userRepository.save(any()) } returns testUser
+            every { verificationService.createVerificationToken(any(), any()) } returns "token123"
+            every { emailService.sendVerificationEmail(any(), any(), any()) } just runs
+            every { roleService.grant(any(), RoleName.TENANT) } just runs
+            every { userMapper.toResponse(any()) } returns testUserResponse
+
+            // When
+            userService.registerUser(registerRequest)
+
+            // Then
+            verify(exactly = 1) {
+                roleService.grant(match { it.id == testUser.id }, RoleName.TENANT)
+            }
         }
 
         @Test
@@ -294,6 +322,7 @@ class UserServiceImplTest {
             every { userRepository.save(any()) } returns testUser
             every { verificationService.createVerificationToken(any(), any()) } returns "token123"
             every { emailService.sendVerificationEmail(any(), any(), any()) } just runs
+            every { roleService.grant(any(), RoleName.TENANT) } just runs
             every { userMapper.toResponse(any()) } returns testUserResponse
 
             // When

@@ -1,6 +1,7 @@
 package com.mudhut.software.kasisira.profiles.services
 
 import com.mudhut.software.kasisira.email.EmailService
+import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.TokenType
 import com.mudhut.software.kasisira.profiles.mappers.UserMapper
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
@@ -38,6 +39,9 @@ class UserServiceImpl : UserService {
 
     @Autowired
     private lateinit var emailService: EmailService
+
+    @Autowired
+    private lateinit var roleService: RoleService
 
     companion object {
         private const val EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
@@ -108,6 +112,10 @@ class UserServiceImpl : UserService {
 
         // Save user
         val savedUser = userRepository.save(user)
+
+        // Grant default TENANT role. Executed within the same @Transactional boundary:
+        // if this fails, the user insert above rolls back.
+        roleService.grant(savedUser, RoleName.TENANT)
 
         try {
             // Generate verification token
