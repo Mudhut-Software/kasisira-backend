@@ -14,6 +14,7 @@ class NoopSmsSender : SmsSender {
     private val log = LoggerFactory.getLogger(NoopSmsSender::class.java)
 
     override fun send(toE164: String, body: String) {
-        log.info("[noop-sms] -> {}: {}", toE164, body)
+        log.info("[noop-sms] -> {} ({} chars)", toE164, body.length)
+        log.debug("[noop-sms] body: {}", body)
     }
 }
