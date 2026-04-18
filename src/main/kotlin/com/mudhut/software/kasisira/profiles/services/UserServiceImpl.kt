@@ -1,8 +1,10 @@
 package com.mudhut.software.kasisira.profiles.services
 
 import com.mudhut.software.kasisira.email.EmailService
+import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.TokenType
+import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.mappers.UserMapper
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
 import com.mudhut.software.kasisira.profiles.models.request.SocialLoginRequest
@@ -184,6 +186,34 @@ class UserServiceImpl : UserService {
         roleService.grant(savedUser, RoleName.TENANT)
 
         return userMapper.toResponse(savedUser)
+    }
+
+    override fun createOAuthUser(
+        username: String,
+        email: String,
+        provider: AuthProvider,
+        providerId: String,
+        imageUrl: String?
+    ): User {
+        val newUser = User(
+            id = 0,
+            username = username,
+            email = email,
+            passwordHash = null, // No password for OAuth users
+            provider = provider,
+            providerId = providerId,
+            imageUrl = imageUrl,
+            emailVerified = true, // OAuth provider has already verified the email
+            isActive = true,
+            isEnabled = true
+        )
+        val savedUser = userRepository.save(newUser)
+
+        // Grant default TENANT role within the same @Transactional boundary:
+        // if this fails, the user insert above rolls back.
+        roleService.grant(savedUser, RoleName.TENANT)
+
+        return savedUser
     }
 
     override fun updateUser(id: Long, request: UpdateUserRequest): UserResponse {

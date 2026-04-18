@@ -1,17 +1,17 @@
 package com.mudhut.software.kasisira.security
 
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
-import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.repositories.RefreshTokenRepository
 import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.profiles.entities.RefreshToken
-import com.mudhut.software.kasisira.profiles.services.RoleService
+import com.mudhut.software.kasisira.profiles.services.UserService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
@@ -31,8 +31,13 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
     @Autowired
     private lateinit var refreshTokenRepository: RefreshTokenRepository
 
+    // @Lazy breaks a bean creation cycle: SecurityConfig pulls this handler, the handler
+    // now pulls UserService, and UserServiceImpl injects the PasswordEncoder bean defined
+    // in SecurityConfig. Using a lazy proxy here lets Spring wire everything up without
+    // eagerly materialising UserServiceImpl during SecurityConfig construction.
     @Autowired
-    private lateinit var roleService: RoleService
+    @Lazy
+    private lateinit var userService: UserService
 
     @Value("\${app.frontend.url}")
     private lateinit var frontendUrl: String
@@ -126,27 +131,19 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
                 throw IllegalStateException("Email already registered with a different provider")
             }
         } else {
-            // Create new user from Google data
-            val username = generateUsername(email, oauth2User)
-
-            val newUser = User(
-                id = 0,
-                username = username,
+            // Create new user from Google data. Delegate to UserService so the user
+            // insert and the default TENANT grant happen in one transaction — if the
+            // grant fails the insert rolls back, so we never persist a roleless user.
+            // Note: inlining this (calling userRepository.save + roleService.grant here)
+            // would not be safe because this handler is not a transactional bean and
+            // self-invocation inside the handler would bypass any @Transactional proxy.
+            userService.createOAuthUser(
+                username = generateUsername(email, oauth2User),
                 email = email,
-                passwordHash = null, // No password for OAuth users
                 provider = AuthProvider.GOOGLE,
                 providerId = providerId,
-                imageUrl = oauth2User.getAttribute("picture"),
-                emailVerified = true,
-                isActive = true,
-                isEnabled = true
+                imageUrl = oauth2User.getAttribute("picture")
             )
-            val savedUser = userRepository.save(newUser)
-
-            // Grant default TENANT role to every newly-created OAuth user.
-            roleService.grant(savedUser, RoleName.TENANT)
-
-            savedUser
         }
     }
 
