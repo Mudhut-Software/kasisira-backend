@@ -1,6 +1,6 @@
 package com.mudhut.software.kasisira.profiles.services
 
-import com.mudhut.software.kasisira.email.EmailService
+import com.mudhut.software.kasisira.notifications.services.NotificationService
 import com.mudhut.software.kasisira.profiles.entities.TokenType
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.entities.VerificationToken
@@ -24,7 +24,7 @@ class VerificationServiceImpl : VerificationService {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var emailService: EmailService
+    private lateinit var notificationService: NotificationService
 
     companion object {
         private const val VERIFICATION_TOKEN_EXPIRY_HOURS = 24L
@@ -96,8 +96,17 @@ class VerificationServiceImpl : VerificationService {
         // Create new verification token
         val token = createVerificationToken(user, TokenType.EMAIL_VERIFICATION)
 
-        // Send verification email
-        emailService.sendVerificationEmail(user.email, user.username, token)
+        // Enqueue verification email via the outbox so delivery happens
+        // asynchronously with retry/backoff. Runs inside this @Transactional
+        // method so the outbox row commits atomically with the new token row.
+        notificationService.enqueueEmail(
+            toEmail = user.email,
+            template = "verification",
+            variables = mapOf(
+                "username" to user.username,
+                "token" to token
+            )
+        )
     }
 
     override fun deleteExpiredTokens() {

@@ -85,6 +85,17 @@ class EmailServiceImpl : EmailService {
             val context = Context()
             // Always expose appName — most templates reference it.
             context.setVariable("appName", appName)
+
+            // Per-template defaults for variables that depend on app config
+            // (frontendUrl/backendUrl/fromEmail) the caller doesn't have.
+            // Callers pass only semantic data (e.g. username, token); the links
+            // are derived here so EmailServiceImpl remains the single owner of
+            // URL and subject shape.
+            templateDefaults(template, variables).forEach { (key, value) ->
+                context.setVariable(key, value)
+            }
+
+            // Caller-supplied variables win over defaults.
             variables.forEach { (key, value) -> context.setVariable(key, value) }
 
             val htmlContent = templateEngine.process("email/$template", context)
@@ -92,6 +103,30 @@ class EmailServiceImpl : EmailService {
             sendHtmlEmail(to, subject, htmlContent)
         } catch (e: Exception) {
             throw RuntimeException("Failed to send templated email '$template' to $to", e)
+        }
+    }
+
+    private fun templateDefaults(template: String, variables: Map<String, Any>): Map<String, Any> {
+        val token = variables["token"] as? String
+        return when (template) {
+            "verification" -> buildMap {
+                if (token != null) {
+                    put("verificationLink", "$backendUrl/api/v1/auth/verify-email?token=$token")
+                    put("mobileDeepLink", "kasisira://verify?token=$token")
+                }
+                put("loginLink", "$frontendUrl/login")
+            }
+            "welcome" -> mapOf(
+                "loginLink" to "$frontendUrl/login",
+                "supportEmail" to fromEmail
+            )
+            "password-reset" -> buildMap {
+                if (token != null) {
+                    put("resetLink", "$frontendUrl/reset-password?token=$token")
+                }
+                put("expiryHours", 24)
+            }
+            else -> emptyMap()
         }
     }
 

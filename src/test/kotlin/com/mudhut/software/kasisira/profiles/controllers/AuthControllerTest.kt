@@ -1,7 +1,6 @@
 package com.mudhut.software.kasisira.profiles.controllers
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.mudhut.software.kasisira.email.EmailService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.models.request.LoginRequest
 import com.mudhut.software.kasisira.profiles.models.request.RefreshTokenRequest
@@ -56,9 +55,6 @@ class AuthControllerTest {
 
     @MockkBean
     private lateinit var verificationService: VerificationService
-
-    @MockkBean
-    private lateinit var emailService: EmailService
 
     private lateinit var testUserResponse: UserResponse
     private lateinit var testTokenResponse: TokenResponse

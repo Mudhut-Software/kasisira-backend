@@ -1,6 +1,6 @@
 package com.mudhut.software.kasisira.profiles.services
 
-import com.mudhut.software.kasisira.email.EmailService
+import com.mudhut.software.kasisira.notifications.services.NotificationService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.TokenType
@@ -40,7 +40,7 @@ class UserServiceImpl : UserService {
     private lateinit var verificationService: VerificationService
 
     @Autowired
-    private lateinit var emailService: EmailService
+    private lateinit var notificationService: NotificationService
 
     @Autowired
     private lateinit var roleService: RoleService
@@ -123,12 +123,21 @@ class UserServiceImpl : UserService {
             // Generate verification token
             val token = verificationService.createVerificationToken(savedUser, TokenType.EMAIL_VERIFICATION)
 
-            // Send verification email
-            emailService.sendVerificationEmail(savedUser.email, savedUser.username, token)
+            // Enqueue verification email via the outbox so delivery happens
+            // asynchronously with retry/backoff. Runs inside this @Transactional
+            // method so the outbox row commits atomically with the user insert.
+            notificationService.enqueueEmail(
+                toEmail = savedUser.email,
+                template = "verification",
+                variables = mapOf(
+                    "username" to savedUser.username,
+                    "token" to token
+                )
+            )
         } catch (e: Exception) {
             // Log the error but don't fail the registration
             // User can request a resend later
-            println("Failed to send verification email: ${e.message}")
+            println("Failed to enqueue verification email: ${e.message}")
         }
 
         return userMapper.toResponse(savedUser)
@@ -287,6 +296,20 @@ class UserServiceImpl : UserService {
 
         val updatedUser = user.copy(emailVerified = true)
         val savedUser = userRepository.save(updatedUser)
+
+        // Enqueue the welcome email in the same transaction as the verification
+        // flag write so the notification never escapes the DB if the commit rolls back.
+        try {
+            notificationService.enqueueEmail(
+                toEmail = savedUser.email,
+                template = "welcome",
+                variables = mapOf("username" to savedUser.username)
+            )
+        } catch (e: Exception) {
+            // Non-fatal: don't fail verification if the outbox enqueue errors.
+            println("Failed to enqueue welcome email: ${e.message}")
+        }
+
         return userMapper.toResponse(savedUser)
     }
 }
