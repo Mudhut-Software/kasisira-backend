@@ -13,6 +13,7 @@ import com.mudhut.software.kasisira.profiles.models.response.UserResponse
 import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.utils.PasswordValidator
 import com.mudhut.software.kasisira.utils.exceptions.*
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
@@ -23,6 +24,8 @@ import java.util.regex.Pattern
 @Service
 @Transactional
 class UserServiceImpl : UserService {
+
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Autowired
     private lateinit var userRepository: UserRepository
@@ -135,9 +138,8 @@ class UserServiceImpl : UserService {
                 )
             )
         } catch (e: Exception) {
-            // Log the error but don't fail the registration
-            // User can request a resend later
-            println("Failed to enqueue verification email: ${e.message}")
+            // Non-fatal: log but don't fail registration. User can request a resend later.
+            log.warn("Failed to enqueue verification email for userId={}", savedUser.id, e)
         }
 
         return userMapper.toResponse(savedUser)
@@ -307,7 +309,7 @@ class UserServiceImpl : UserService {
             )
         } catch (e: Exception) {
             // Non-fatal: don't fail verification if the outbox enqueue errors.
-            println("Failed to enqueue welcome email: ${e.message}")
+            log.warn("Failed to enqueue welcome email for userId={}", savedUser.id, e)
         }
 
         return userMapper.toResponse(savedUser)
