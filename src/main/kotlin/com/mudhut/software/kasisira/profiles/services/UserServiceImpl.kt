@@ -178,6 +178,11 @@ class UserServiceImpl : UserService {
         )
 
         val savedUser = userRepository.save(user)
+
+        // Grant default TENANT role. Executed within the same @Transactional boundary:
+        // if this fails, the user insert above rolls back.
+        roleService.grant(savedUser, RoleName.TENANT)
+
         return userMapper.toResponse(savedUser)
     }
 

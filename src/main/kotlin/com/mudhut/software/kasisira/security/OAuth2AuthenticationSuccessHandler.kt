@@ -1,10 +1,12 @@
 package com.mudhut.software.kasisira.security
 
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
+import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.repositories.RefreshTokenRepository
 import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.profiles.entities.RefreshToken
+import com.mudhut.software.kasisira.profiles.services.RoleService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
@@ -28,6 +30,9 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
 
     @Autowired
     private lateinit var refreshTokenRepository: RefreshTokenRepository
+
+    @Autowired
+    private lateinit var roleService: RoleService
 
     @Value("\${app.frontend.url}")
     private lateinit var frontendUrl: String
@@ -136,7 +141,12 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
                 isActive = true,
                 isEnabled = true
             )
-            userRepository.save(newUser)
+            val savedUser = userRepository.save(newUser)
+
+            // Grant default TENANT role to every newly-created OAuth user.
+            roleService.grant(savedUser, RoleName.TENANT)
+
+            savedUser
         }
     }
 
