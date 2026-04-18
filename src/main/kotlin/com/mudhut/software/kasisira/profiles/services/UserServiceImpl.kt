@@ -1,7 +1,10 @@
 package com.mudhut.software.kasisira.profiles.services
 
-import com.mudhut.software.kasisira.email.EmailService
+import com.mudhut.software.kasisira.notifications.services.NotificationService
+import com.mudhut.software.kasisira.profiles.entities.AuthProvider
+import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.TokenType
+import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.mappers.UserMapper
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
 import com.mudhut.software.kasisira.profiles.models.request.SocialLoginRequest
@@ -10,16 +13,19 @@ import com.mudhut.software.kasisira.profiles.models.response.UserResponse
 import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.utils.PasswordValidator
 import com.mudhut.software.kasisira.utils.exceptions.*
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.regex.Pattern
 
 @Service
 @Transactional
 class UserServiceImpl : UserService {
+
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Autowired
     private lateinit var userRepository: UserRepository
@@ -37,7 +43,10 @@ class UserServiceImpl : UserService {
     private lateinit var verificationService: VerificationService
 
     @Autowired
-    private lateinit var emailService: EmailService
+    private lateinit var notificationService: NotificationService
+
+    @Autowired
+    private lateinit var roleService: RoleService
 
     companion object {
         private const val EMAIL_PATTERN = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
@@ -109,16 +118,28 @@ class UserServiceImpl : UserService {
         // Save user
         val savedUser = userRepository.save(user)
 
+        // Grant default TENANT role. Executed within the same @Transactional boundary:
+        // if this fails, the user insert above rolls back.
+        roleService.grant(savedUser, RoleName.TENANT)
+
         try {
             // Generate verification token
             val token = verificationService.createVerificationToken(savedUser, TokenType.EMAIL_VERIFICATION)
 
-            // Send verification email
-            emailService.sendVerificationEmail(savedUser.email, savedUser.username, token)
+            // Enqueue verification email via the outbox so delivery happens
+            // asynchronously with retry/backoff. Runs inside this @Transactional
+            // method so the outbox row commits atomically with the user insert.
+            notificationService.enqueueEmail(
+                toEmail = savedUser.email,
+                template = "verification",
+                variables = mapOf(
+                    "username" to savedUser.username,
+                    "token" to token
+                )
+            )
         } catch (e: Exception) {
-            // Log the error but don't fail the registration
-            // User can request a resend later
-            println("Failed to send verification email: ${e.message}")
+            // Non-fatal: log but don't fail registration. User can request a resend later.
+            log.warn("Failed to enqueue verification email for userId={}", savedUser.id, e)
         }
 
         return userMapper.toResponse(savedUser)
@@ -131,7 +152,7 @@ class UserServiceImpl : UserService {
         if (existingUser.isPresent) {
             // Update last login and return existing user
             val user = existingUser.get()
-            val updatedUser = user.copy(lastLogin = LocalDateTime.now())
+            val updatedUser = user.copy(lastLogin = Instant.now())
             val saved = userRepository.save(updatedUser)
             return userMapper.toResponse(saved)
         }
@@ -170,7 +191,40 @@ class UserServiceImpl : UserService {
         )
 
         val savedUser = userRepository.save(user)
+
+        // Grant default TENANT role. Executed within the same @Transactional boundary:
+        // if this fails, the user insert above rolls back.
+        roleService.grant(savedUser, RoleName.TENANT)
+
         return userMapper.toResponse(savedUser)
+    }
+
+    override fun createOAuthUser(
+        username: String,
+        email: String,
+        provider: AuthProvider,
+        providerId: String,
+        imageUrl: String?
+    ): User {
+        val newUser = User(
+            id = 0,
+            username = username,
+            email = email,
+            passwordHash = null, // No password for OAuth users
+            provider = provider,
+            providerId = providerId,
+            imageUrl = imageUrl,
+            emailVerified = true, // OAuth provider has already verified the email
+            isActive = true,
+            isEnabled = true
+        )
+        val savedUser = userRepository.save(newUser)
+
+        // Grant default TENANT role within the same @Transactional boundary:
+        // if this fails, the user insert above rolls back.
+        roleService.grant(savedUser, RoleName.TENANT)
+
+        return savedUser
     }
 
     override fun updateUser(id: Long, request: UpdateUserRequest): UserResponse {
@@ -216,7 +270,7 @@ class UserServiceImpl : UserService {
         val user = userRepository.findById(userId)
             .orElseThrow { UserNotFoundException("User with id $userId not found") }
 
-        val updatedUser = user.copy(lastLogin = LocalDateTime.now())
+        val updatedUser = user.copy(lastLogin = Instant.now())
         userRepository.save(updatedUser)
     }
 
@@ -244,6 +298,20 @@ class UserServiceImpl : UserService {
 
         val updatedUser = user.copy(emailVerified = true)
         val savedUser = userRepository.save(updatedUser)
+
+        // Enqueue the welcome email in the same transaction as the verification
+        // flag write so the notification never escapes the DB if the commit rolls back.
+        try {
+            notificationService.enqueueEmail(
+                toEmail = savedUser.email,
+                template = "welcome",
+                variables = mapOf("username" to savedUser.username)
+            )
+        } catch (e: Exception) {
+            // Non-fatal: don't fail verification if the outbox enqueue errors.
+            log.warn("Failed to enqueue welcome email for userId={}", savedUser.id, e)
+        }
+
         return userMapper.toResponse(savedUser)
     }
 }

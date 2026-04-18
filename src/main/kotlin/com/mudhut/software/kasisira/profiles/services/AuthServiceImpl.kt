@@ -16,7 +16,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Service
 @Transactional
@@ -84,7 +84,7 @@ class AuthServiceImpl : AuthService {
         saveRefreshToken(user.id, refreshToken, httpRequest)
 
         // Update last login
-        val updatedUser = user.copy(lastLogin = LocalDateTime.now())
+        val updatedUser = user.copy(lastLogin = Instant.now())
         userRepository.save(updatedUser)
 
         return TokenResponse(
@@ -137,7 +137,7 @@ class AuthServiceImpl : AuthService {
 
         // Revoke old refresh token
         storedToken.revoked = true
-        storedToken.revokedAt = LocalDateTime.now()
+        storedToken.revokedAt = Instant.now()
         refreshTokenRepository.save(storedToken)
 
         // Save new refresh token
@@ -156,19 +156,19 @@ class AuthServiceImpl : AuthService {
             .orElseThrow { InvalidTokenException("Refresh token not found") }
 
         storedToken.revoked = true
-        storedToken.revokedAt = LocalDateTime.now()
+        storedToken.revokedAt = Instant.now()
         refreshTokenRepository.save(storedToken)
     }
 
     override fun logoutAll(userId: Long) {
-        refreshTokenRepository.revokeAllUserTokens(userId, LocalDateTime.now())
+        refreshTokenRepository.revokeAllUserTokens(userId, Instant.now())
     }
 
     private fun saveRefreshToken(userId: Long, token: String, request: HttpServletRequest) {
         val user = userRepository.findById(userId)
             .orElseThrow { UserNotFoundException("User not found") }
 
-        val expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpirationMs / 1000)
+        val expiresAt = Instant.now().plusSeconds(refreshTokenExpirationMs / 1000)
 
         val refreshToken = RefreshToken(
             token = token,

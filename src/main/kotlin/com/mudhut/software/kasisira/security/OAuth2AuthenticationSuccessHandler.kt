@@ -5,17 +5,19 @@ import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.repositories.RefreshTokenRepository
 import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.profiles.entities.RefreshToken
+import com.mudhut.software.kasisira.profiles.services.UserService
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 import org.springframework.security.core.Authentication
 import org.springframework.security.oauth2.core.user.OAuth2User
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler
 import org.springframework.stereotype.Component
 import org.springframework.web.util.UriComponentsBuilder
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Component
 class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler() {
@@ -28,6 +30,14 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
 
     @Autowired
     private lateinit var refreshTokenRepository: RefreshTokenRepository
+
+    // @Lazy breaks a bean creation cycle: SecurityConfig pulls this handler, the handler
+    // now pulls UserService, and UserServiceImpl injects the PasswordEncoder bean defined
+    // in SecurityConfig. Using a lazy proxy here lets Spring wire everything up without
+    // eagerly materialising UserServiceImpl during SecurityConfig construction.
+    @Autowired
+    @Lazy
+    private lateinit var userService: UserService
 
     @Value("\${app.frontend.url}")
     private lateinit var frontendUrl: String
@@ -94,7 +104,7 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
         if (existingUserByProvider.isPresent) {
             // User already exists with this Google account
             val user = existingUserByProvider.get()
-            val updatedUser = user.copy(lastLogin = LocalDateTime.now())
+            val updatedUser = user.copy(lastLogin = Instant.now())
             return userRepository.save(updatedUser)
         }
 
@@ -113,7 +123,7 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
                     imageUrl = oauth2User.getAttribute("picture") ?: user.imageUrl,
                     emailVerified = true, // Google emails are verified
                     isActive = true,
-                    lastLogin = LocalDateTime.now()
+                    lastLogin = Instant.now()
                 )
                 userRepository.save(linkedUser)
             } else {
@@ -121,22 +131,19 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
                 throw IllegalStateException("Email already registered with a different provider")
             }
         } else {
-            // Create new user from Google data
-            val username = generateUsername(email, oauth2User)
-
-            val newUser = User(
-                id = 0,
-                username = username,
+            // Create new user from Google data. Delegate to UserService so the user
+            // insert and the default TENANT grant happen in one transaction — if the
+            // grant fails the insert rolls back, so we never persist a roleless user.
+            // Note: inlining this (calling userRepository.save + roleService.grant here)
+            // would not be safe because this handler is not a transactional bean and
+            // self-invocation inside the handler would bypass any @Transactional proxy.
+            userService.createOAuthUser(
+                username = generateUsername(email, oauth2User),
                 email = email,
-                passwordHash = null, // No password for OAuth users
                 provider = AuthProvider.GOOGLE,
                 providerId = providerId,
-                imageUrl = oauth2User.getAttribute("picture"),
-                emailVerified = true,
-                isActive = true,
-                isEnabled = true
+                imageUrl = oauth2User.getAttribute("picture")
             )
-            userRepository.save(newUser)
         }
     }
 
@@ -159,7 +166,7 @@ class OAuth2AuthenticationSuccessHandler : SimpleUrlAuthenticationSuccessHandler
     }
 
     private fun saveRefreshToken(user: User, token: String, request: HttpServletRequest) {
-        val expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpirationMs / 1000)
+        val expiresAt = Instant.now().plusSeconds(refreshTokenExpirationMs / 1000)
 
         val refreshToken = RefreshToken(
             token = token,

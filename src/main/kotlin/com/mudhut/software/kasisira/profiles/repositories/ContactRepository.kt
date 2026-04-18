@@ -15,4 +15,6 @@ interface ContactRepository : JpaRepository<Contact, Long> {
     fun findByUserAndIsPrimary(user: User, isPrimary: Boolean): List<Contact>
 
     fun findByUserIdAndIsPrimaryTrue(userId: Long): List<Contact>
+
+    fun findByPhoneNumber(phoneNumber: String): Contact?
 }

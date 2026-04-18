@@ -9,7 +9,7 @@ import jakarta.validation.constraints.Size
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -118,11 +118,11 @@ data class Property(
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
-    val createdAt: LocalDateTime? = null,
+    val createdAt: Instant? = null,
 
     @Column(name = "updated_at", nullable = false)
     @UpdateTimestamp
-    val updatedAt: LocalDateTime? = null
+    val updatedAt: Instant? = null
 ) {
     fun addMedia(propertyMedia: PropertyMedia) {
         media.add(propertyMedia)

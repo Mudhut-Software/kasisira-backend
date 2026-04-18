@@ -1,6 +1,6 @@
 package com.mudhut.software.kasisira.profiles.services
 
-import com.mudhut.software.kasisira.email.EmailService
+import com.mudhut.software.kasisira.notifications.services.NotificationService
 import com.mudhut.software.kasisira.profiles.entities.TokenType
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.entities.VerificationToken
@@ -10,7 +10,8 @@ import com.mudhut.software.kasisira.utils.exceptions.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 
 @Service
@@ -24,7 +25,7 @@ class VerificationServiceImpl : VerificationService {
     private lateinit var userRepository: UserRepository
 
     @Autowired
-    private lateinit var emailService: EmailService
+    private lateinit var notificationService: NotificationService
 
     companion object {
         private const val VERIFICATION_TOKEN_EXPIRY_HOURS = 24L
@@ -49,7 +50,7 @@ class VerificationServiceImpl : VerificationService {
             token = token,
             user = user,
             tokenType = tokenType,
-            expiresAt = LocalDateTime.now().plusHours(expiryHours)
+            expiresAt = Instant.now().plus(Duration.ofHours(expiryHours))
         )
 
         verificationTokenRepository.save(verificationToken)
@@ -78,7 +79,7 @@ class VerificationServiceImpl : VerificationService {
 
         // Mark token as used
         verificationToken.isUsed = true
-        verificationToken.usedAt = LocalDateTime.now()
+        verificationToken.usedAt = Instant.now()
         verificationTokenRepository.save(verificationToken)
 
         return verificationToken.user
@@ -96,12 +97,21 @@ class VerificationServiceImpl : VerificationService {
         // Create new verification token
         val token = createVerificationToken(user, TokenType.EMAIL_VERIFICATION)
 
-        // Send verification email
-        emailService.sendVerificationEmail(user.email, user.username, token)
+        // Enqueue verification email via the outbox so delivery happens
+        // asynchronously with retry/backoff. Runs inside this @Transactional
+        // method so the outbox row commits atomically with the new token row.
+        notificationService.enqueueEmail(
+            toEmail = user.email,
+            template = "verification",
+            variables = mapOf(
+                "username" to user.username,
+                "token" to token
+            )
+        )
     }
 
     override fun deleteExpiredTokens() {
-        verificationTokenRepository.deleteByExpiresAtBeforeAndIsUsedTrue(LocalDateTime.now())
+        verificationTokenRepository.deleteByExpiresAtBeforeAndIsUsedTrue(Instant.now())
     }
 
     override fun invalidateUserTokens(userId: Long, tokenType: TokenType) {

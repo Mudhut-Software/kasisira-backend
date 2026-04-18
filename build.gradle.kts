@@ -24,6 +24,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { setUrl("https://jitpack.io") }
 }
 
 dependencies {
@@ -45,6 +46,7 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("org.thymeleaf.extras:thymeleaf-extras-springsecurity6")
 	implementation("me.paulschwarz:spring-dotenv:4.0.0")
+	implementation("com.github.AfricasTalkingLtd.africastalking-java:core:v3.5.3")
 	developmentOnly("org.springframework.boot:spring-boot-devtools")
 	runtimeOnly("org.postgresql:postgresql")
 	annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")

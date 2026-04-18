@@ -1,7 +1,6 @@
 package com.mudhut.software.kasisira.profiles.controllers
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.mudhut.software.kasisira.email.EmailService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.models.request.LoginRequest
 import com.mudhut.software.kasisira.profiles.models.request.RefreshTokenRequest
@@ -31,7 +30,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import java.time.LocalDateTime
+import java.time.Instant
 
 @WebMvcTest(
     controllers = [AuthController::class],
@@ -57,9 +56,6 @@ class AuthControllerTest {
     @MockkBean
     private lateinit var verificationService: VerificationService
 
-    @MockkBean
-    private lateinit var emailService: EmailService
-
     private lateinit var testUserResponse: UserResponse
     private lateinit var testTokenResponse: TokenResponse
 
@@ -75,8 +71,8 @@ class AuthControllerTest {
             isActive = false,
             isEnabled = true,
             contacts = emptyList(),
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
             lastLogin = null
         )
 

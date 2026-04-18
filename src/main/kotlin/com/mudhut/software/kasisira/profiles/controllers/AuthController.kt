@@ -1,6 +1,5 @@
 package com.mudhut.software.kasisira.profiles.controllers
 
-import com.mudhut.software.kasisira.email.EmailService
 import com.mudhut.software.kasisira.profiles.entities.TokenType
 import com.mudhut.software.kasisira.profiles.models.request.LoginRequest
 import com.mudhut.software.kasisira.profiles.models.request.RefreshTokenRequest
@@ -31,9 +30,6 @@ class AuthController {
     @Autowired
     private lateinit var verificationService: VerificationService
 
-    @Autowired
-    private lateinit var emailService: EmailService
-
     @Value("\${app.frontend.url}")
     private lateinit var frontendUrl: String
 
@@ -56,16 +52,11 @@ class AuthController {
             // Verify the token and get the user
             val user = verificationService.verifyToken(token, TokenType.EMAIL_VERIFICATION)
 
-            // Activate the user
+            // Activate the user. verifyEmail also enqueues the welcome email
+            // via NotificationService so it commits atomically with the
+            // emailVerified flag write.
             userService.verifyEmail(user.id)
             userService.activateUser(user.id)
-
-            // Send welcome email
-            try {
-                emailService.sendWelcomeEmail(user.email, user.username)
-            } catch (e: Exception) {
-                println("Failed to send welcome email: ${e.message}")
-            }
 
             // Redirect to success page
             RedirectView("$frontendUrl/email-verified?success=true")

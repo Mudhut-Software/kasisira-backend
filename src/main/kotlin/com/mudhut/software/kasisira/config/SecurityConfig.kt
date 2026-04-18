@@ -85,6 +85,7 @@ class SecurityConfig {
                         "/v1/auth/verify-email",
                         "/v1/auth/resend-verification",
                         "/v1/auth/check-email-verified",
+                        "/v1/auth/phone/**",
                         "/oauth2/**",
                         "/error",
                         "/actuator/health"

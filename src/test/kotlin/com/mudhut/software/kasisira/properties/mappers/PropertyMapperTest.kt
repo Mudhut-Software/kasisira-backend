@@ -12,7 +12,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 
 class PropertyMapperTest {
 
@@ -39,8 +39,8 @@ class PropertyMapperTest {
             emailVerified = true,
             isActive = true,
             isEnabled = true,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testMedia = PropertyMedia(
@@ -50,8 +50,8 @@ class PropertyMapperTest {
             description = "Front view",
             isPrimary = true,
             displayOrder = 0,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testMediaResponse = PropertyMediaResponse(
@@ -62,7 +62,7 @@ class PropertyMapperTest {
             description = "Front view",
             isPrimary = true,
             displayOrder = 0,
-            createdAt = LocalDateTime.now()
+            createdAt = Instant.now()
         )
 
         testProperty = Property(
@@ -90,8 +90,8 @@ class PropertyMapperTest {
             features = "parking,garden,security",
             status = PropertyStatus.ACTIVE,
             viewCount = 100,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
         testProperty.media.add(testMedia)
         testMedia.property = testProperty

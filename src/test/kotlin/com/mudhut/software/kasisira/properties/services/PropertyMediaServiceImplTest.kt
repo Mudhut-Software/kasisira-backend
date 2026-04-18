@@ -20,7 +20,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.extension.ExtendWith
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @ExtendWith(MockKExtension::class)
@@ -77,8 +77,8 @@ class PropertyMediaServiceImplTest {
             description = "Front view",
             isPrimary = false,
             displayOrder = 0,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testMediaResponse = PropertyMediaResponse(
@@ -89,7 +89,7 @@ class PropertyMediaServiceImplTest {
             description = "Front view",
             isPrimary = false,
             displayOrder = 0,
-            createdAt = LocalDateTime.now()
+            createdAt = Instant.now()
         )
     }
 

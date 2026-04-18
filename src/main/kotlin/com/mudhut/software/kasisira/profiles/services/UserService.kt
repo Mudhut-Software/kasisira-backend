@@ -1,5 +1,7 @@
 package com.mudhut.software.kasisira.profiles.services
 
+import com.mudhut.software.kasisira.profiles.entities.AuthProvider
+import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
 import com.mudhut.software.kasisira.profiles.models.request.SocialLoginRequest
 import com.mudhut.software.kasisira.profiles.models.request.UpdateUserRequest
@@ -20,6 +22,20 @@ interface UserService {
     fun registerUser(request: RegisterRequest): UserResponse
 
     fun registerSocialUser(request: SocialLoginRequest): UserResponse
+
+    /**
+     * Creates a new OAuth-provisioned user and grants the default TENANT role in a single
+     * transaction. If the role grant fails, the user insert rolls back so we never persist
+     * a user without a role. Returns the managed [User] entity so the OAuth success handler
+     * can issue tokens using the generated id.
+     */
+    fun createOAuthUser(
+        username: String,
+        email: String,
+        provider: AuthProvider,
+        providerId: String,
+        imageUrl: String?
+    ): User
 
     fun updateUser(id: Long, request: UpdateUserRequest): UserResponse
 

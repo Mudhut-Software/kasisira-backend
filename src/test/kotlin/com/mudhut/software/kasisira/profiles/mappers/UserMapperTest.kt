@@ -2,20 +2,24 @@ package com.mudhut.software.kasisira.profiles.mappers
 
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.Contact
+import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.profiles.entities.UserRole
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
 import com.mudhut.software.kasisira.profiles.models.response.ContactResponse
+import com.mudhut.software.kasisira.profiles.repositories.UserRoleRepository
 import io.mockk.every
 import io.mockk.mockk
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import java.time.LocalDateTime
+import java.time.Instant
 
 class UserMapperTest {
 
     private lateinit var contactMapper: ContactMapper
+    private lateinit var userRoleRepository: UserRoleRepository
     private lateinit var userMapper: UserMapper
 
     private lateinit var testUser: User
@@ -25,7 +29,11 @@ class UserMapperTest {
     @BeforeEach
     fun setUp() {
         contactMapper = mockk()
-        userMapper = UserMapper(contactMapper)
+        userRoleRepository = mockk()
+        userMapper = UserMapper(contactMapper, userRoleRepository)
+
+        // Default: no roles. Individual tests override to assert role mapping.
+        every { userRoleRepository.findAllByUserId(any()) } returns emptyList()
 
         testContact = Contact(
             id = 1L,
@@ -33,8 +41,8 @@ class UserMapperTest {
             isPrimary = true,
             isVerified = false,
             label = "Primary",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testContactResponse = ContactResponse(
@@ -43,8 +51,8 @@ class UserMapperTest {
             isPrimary = true,
             isVerified = false,
             label = "Primary",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testUser = User(
@@ -58,9 +66,9 @@ class UserMapperTest {
             emailVerified = true,
             isActive = true,
             isEnabled = true,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            lastLogin = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            lastLogin = Instant.now()
         )
     }
 
@@ -129,6 +137,32 @@ class UserMapperTest {
             // Then
             assertNull(response.imageUrl)
             assertNull(response.lastLogin)
+        }
+
+        @Test
+        fun `should populate roles from UserRoleRepository`() {
+            // Given
+            val tenantRole = UserRole(id = 10L, user = testUser, roleName = RoleName.TENANT)
+            val ownerRole = UserRole(id = 11L, user = testUser, roleName = RoleName.OWNER)
+            every { userRoleRepository.findAllByUserId(testUser.id) } returns listOf(tenantRole, ownerRole)
+
+            // When
+            val response = userMapper.toResponse(testUser)
+
+            // Then
+            assertEquals(setOf("TENANT", "OWNER"), response.roles)
+        }
+
+        @Test
+        fun `should return empty roles set when user has no roles`() {
+            // Given
+            every { userRoleRepository.findAllByUserId(testUser.id) } returns emptyList()
+
+            // When
+            val response = userMapper.toResponse(testUser)
+
+            // Then
+            assertTrue(response.roles.isEmpty())
         }
     }
 

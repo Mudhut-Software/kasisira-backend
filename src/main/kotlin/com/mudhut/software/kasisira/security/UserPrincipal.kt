@@ -18,8 +18,14 @@ class UserPrincipal(
 ) : UserDetails, OAuth2User {
 
     companion object {
-        fun create(user: User): UserPrincipal {
-            val authorities = listOf(SimpleGrantedAuthority("ROLE_USER"))
+        fun create(user: User, roles: Set<String>): UserPrincipal {
+            // Spring Security's hasRole('X') expects a GrantedAuthority of "ROLE_X".
+            // We prefix here so role names stored in the DB stay unprefixed (e.g. "OWNER")
+            // and @PreAuthorize("hasRole('OWNER')") just works.
+            // An empty role set is a legitimate state (e.g. a suspended or unrecognized
+            // user) and yields an empty authorities collection so hasRole(anything)
+            // correctly denies.
+            val authorities = roles.map { SimpleGrantedAuthority("ROLE_$it") }
 
             return UserPrincipal(
                 id = user.id,
@@ -32,8 +38,8 @@ class UserPrincipal(
             )
         }
 
-        fun create(user: User, attributes: Map<String, Any>): UserPrincipal {
-            val userPrincipal = create(user)
+        fun create(user: User, roles: Set<String>, attributes: Map<String, Any>): UserPrincipal {
+            val userPrincipal = create(user, roles)
             userPrincipal.attributes = attributes
             return userPrincipal
         }

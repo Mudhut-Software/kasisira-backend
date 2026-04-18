@@ -26,7 +26,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @ExtendWith(MockKExtension::class)
@@ -74,8 +74,8 @@ class PropertyServiceImplTest {
             city = "Kampala",
             district = "Wakiso",
             status = PropertyStatus.DRAFT,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testPropertyResponse = PropertyResponse(
@@ -105,8 +105,8 @@ class PropertyServiceImplTest {
             viewCount = 0,
             media = emptyList(),
             primaryImage = null,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testPropertySummaryResponse = PropertySummaryResponse(
@@ -125,7 +125,7 @@ class PropertyServiceImplTest {
             status = PropertyStatus.DRAFT,
             primaryImage = null,
             viewCount = 0,
-            createdAt = LocalDateTime.now()
+            createdAt = Instant.now()
         )
     }
 

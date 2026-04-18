@@ -1,7 +1,8 @@
 package com.mudhut.software.kasisira.profiles.services
 
-import com.mudhut.software.kasisira.email.EmailService
+import com.mudhut.software.kasisira.notifications.services.NotificationService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
+import com.mudhut.software.kasisira.profiles.entities.RoleName
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.mappers.UserMapper
 import com.mudhut.software.kasisira.profiles.models.request.RegisterRequest
@@ -17,7 +18,7 @@ import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.crypto.password.PasswordEncoder
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @ExtendWith(MockKExtension::class)
@@ -39,7 +40,10 @@ class UserServiceImplTest {
     private lateinit var verificationService: VerificationService
 
     @MockK
-    private lateinit var emailService: EmailService
+    private lateinit var notificationService: NotificationService
+
+    @MockK
+    private lateinit var roleService: RoleService
 
     @InjectMockKs
     private lateinit var userService: UserServiceImpl
@@ -58,8 +62,8 @@ class UserServiceImplTest {
             emailVerified = false,
             isActive = false,
             isEnabled = true,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testUserResponse = UserResponse(
@@ -72,8 +76,8 @@ class UserServiceImplTest {
             isActive = false,
             isEnabled = true,
             contacts = emptyList(),
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
             lastLogin = null
         )
     }
@@ -224,7 +228,8 @@ class UserServiceImplTest {
             every { userMapper.fromRegisterRequestWithContact(any(), any()) } returns testUser
             every { userRepository.save(any()) } returns testUser
             every { verificationService.createVerificationToken(any(), any()) } returns "token123"
-            every { emailService.sendVerificationEmail(any(), any(), any()) } just runs
+            every { notificationService.enqueueEmail(any(), any(), any()) } just runs
+            every { roleService.grant(any(), RoleName.TENANT) } just runs
             every { userMapper.toResponse(any()) } returns testUserResponse
 
             // When
@@ -235,6 +240,36 @@ class UserServiceImplTest {
             verify { passwordValidator.validatePassword("Password123!") }
             verify { passwordEncoder.encode("Password123!") }
             verify { userRepository.save(any()) }
+            verify(exactly = 1) {
+                notificationService.enqueueEmail(
+                    eq("test@example.com"),
+                    eq("verification"),
+                    match { it["token"] == "token123" && it["username"] == "testuser" }
+                )
+            }
+        }
+
+        @Test
+        fun `registerUser grants TENANT role after creating the user`() {
+            // Given
+            every { userRepository.existsByEmail(any()) } returns false
+            every { userRepository.existsByUsername(any()) } returns false
+            every { passwordValidator.validatePassword(any()) } just runs
+            every { passwordEncoder.encode(any()) } returns "encodedPassword"
+            every { userMapper.fromRegisterRequestWithContact(any(), any()) } returns testUser
+            every { userRepository.save(any()) } returns testUser
+            every { verificationService.createVerificationToken(any(), any()) } returns "token123"
+            every { notificationService.enqueueEmail(any(), any(), any()) } just runs
+            every { roleService.grant(any(), RoleName.TENANT) } just runs
+            every { userMapper.toResponse(any()) } returns testUserResponse
+
+            // When
+            userService.registerUser(registerRequest)
+
+            // Then
+            verify(exactly = 1) {
+                roleService.grant(match { it.id == testUser.id }, RoleName.TENANT)
+            }
         }
 
         @Test
@@ -293,7 +328,8 @@ class UserServiceImplTest {
             every { userMapper.fromRegisterRequest(any(), any()) } returns testUser
             every { userRepository.save(any()) } returns testUser
             every { verificationService.createVerificationToken(any(), any()) } returns "token123"
-            every { emailService.sendVerificationEmail(any(), any(), any()) } just runs
+            every { notificationService.enqueueEmail(any(), any(), any()) } just runs
+            every { roleService.grant(any(), RoleName.TENANT) } just runs
             every { userMapper.toResponse(any()) } returns testUserResponse
 
             // When
@@ -465,12 +501,37 @@ class UserServiceImplTest {
             every { userRepository.findById(1L) } returns Optional.of(testUser)
             every { userRepository.save(any()) } returns verifiedUser
             every { userMapper.toResponse(any()) } returns verifiedResponse
+            every { notificationService.enqueueEmail(any(), any(), any()) } just runs
 
             // When
             val result = userService.verifyEmail(1L)
 
             // Then
             Assertions.assertTrue(result.emailVerified)
+        }
+
+        @Test
+        fun `verifyEmail enqueues welcome email via NotificationService`() {
+            // Given
+            val verifiedUser = testUser.copy(emailVerified = true)
+            val verifiedResponse = testUserResponse.copy(emailVerified = true)
+
+            every { userRepository.findById(1L) } returns Optional.of(testUser)
+            every { userRepository.save(any()) } returns verifiedUser
+            every { userMapper.toResponse(any()) } returns verifiedResponse
+            every { notificationService.enqueueEmail(any(), any(), any()) } just runs
+
+            // When
+            userService.verifyEmail(1L)
+
+            // Then
+            verify(exactly = 1) {
+                notificationService.enqueueEmail(
+                    eq("test@example.com"),
+                    eq("welcome"),
+                    match { it["username"] == "testuser" }
+                )
+            }
         }
     }
 

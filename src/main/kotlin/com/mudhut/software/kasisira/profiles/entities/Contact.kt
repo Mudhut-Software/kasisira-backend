@@ -5,12 +5,14 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
-@Table(name = "contacts", indexes = [
-    Index(name = "idx_contact_user", columnList = "user_id")
-])
+@Table(
+    name = "contacts",
+    uniqueConstraints = [UniqueConstraint(name = "uk_contact_phone_number", columnNames = ["phone_number"])],
+    indexes = [Index(name = "idx_contact_user", columnList = "user_id")]
+)
 data class Contact(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
@@ -36,11 +38,11 @@ data class Contact(
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
-    val createdAt: LocalDateTime? = null,
+    val createdAt: Instant? = null,
 
     @Column(name = "updated_at", nullable = false)
     @UpdateTimestamp
-    val updatedAt: LocalDateTime? = null
+    val updatedAt: Instant? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
