@@ -1,14 +1,14 @@
 package com.mudhut.software.kasisira.utils.exceptions
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import java.time.LocalDateTime
+import java.time.Instant
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class ErrorResponse(
     val errorCode: String,
     val message: String? = null,
     val errors: Map<String, String>? = null,
-    val timestamp: LocalDateTime = LocalDateTime.now()
+    val timestamp: Instant = Instant.now()
 ) {
     constructor(errorCode: String, message: String) : this(
         errorCode = errorCode,

@@ -1,7 +1,7 @@
 package com.mudhut.software.kasisira.profiles.models.response
 
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
-import java.time.LocalDateTime
+import java.time.Instant
 
 data class UserResponse(
     val id: Long,
@@ -13,8 +13,8 @@ data class UserResponse(
     val isActive: Boolean,
     val isEnabled: Boolean,
     val contacts: List<ContactResponse>,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?,
-    val lastLogin: LocalDateTime?,
+    val createdAt: Instant?,
+    val updatedAt: Instant?,
+    val lastLogin: Instant?,
     val roles: Set<String> = emptySet()
 )

@@ -14,7 +14,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
-import java.time.LocalDateTime
+import java.time.Instant
 
 class UserMapperTest {
 
@@ -41,8 +41,8 @@ class UserMapperTest {
             isPrimary = true,
             isVerified = false,
             label = "Primary",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testContactResponse = ContactResponse(
@@ -51,8 +51,8 @@ class UserMapperTest {
             isPrimary = true,
             isVerified = false,
             label = "Primary",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testUser = User(
@@ -66,9 +66,9 @@ class UserMapperTest {
             emailVerified = true,
             isActive = true,
             isEnabled = true,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
-            lastLogin = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
+            lastLogin = Instant.now()
         )
     }
 

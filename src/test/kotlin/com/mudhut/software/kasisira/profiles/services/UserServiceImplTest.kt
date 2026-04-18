@@ -18,7 +18,7 @@ import io.mockk.junit5.MockKExtension
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.crypto.password.PasswordEncoder
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @ExtendWith(MockKExtension::class)
@@ -62,8 +62,8 @@ class UserServiceImplTest {
             emailVerified = false,
             isActive = false,
             isEnabled = true,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testUserResponse = UserResponse(
@@ -76,8 +76,8 @@ class UserServiceImplTest {
             isActive = false,
             isEnabled = true,
             contacts = emptyList(),
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
             lastLogin = null
         )
     }

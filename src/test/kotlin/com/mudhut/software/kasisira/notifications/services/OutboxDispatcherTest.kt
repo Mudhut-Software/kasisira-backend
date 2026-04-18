@@ -17,8 +17,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 @ExtendWith(MockKExtension::class)
@@ -72,7 +72,7 @@ class OutboxDispatcherTest {
         verify(exactly = 1) { smsSender.send("+256700123456", "Your code is 123456") }
         val saved = savedSlot.captured
         Assertions.assertEquals(OutboxStatus.SENT, saved.status)
-        Assertions.assertEquals(LocalDateTime.now(clock), saved.processedAt)
+        Assertions.assertEquals(Instant.now(clock), saved.processedAt)
         Assertions.assertNull(saved.lastError)
     }
 
@@ -101,7 +101,7 @@ class OutboxDispatcherTest {
         Assertions.assertEquals("Kasisira", varsSlot.captured["appName"])
         val saved = savedSlot.captured
         Assertions.assertEquals(OutboxStatus.SENT, saved.status)
-        Assertions.assertEquals(LocalDateTime.now(clock), saved.processedAt)
+        Assertions.assertEquals(Instant.now(clock), saved.processedAt)
         Assertions.assertNull(saved.lastError)
     }
 
@@ -127,7 +127,7 @@ class OutboxDispatcherTest {
         verify(exactly = 0) { emailService.sendTemplate(any(), any(), any()) }
         val saved = savedSlot.captured
         Assertions.assertEquals(OutboxStatus.SENT, saved.status)
-        Assertions.assertEquals(LocalDateTime.now(clock), saved.processedAt)
+        Assertions.assertEquals(Instant.now(clock), saved.processedAt)
     }
 
     @Test
@@ -140,7 +140,7 @@ class OutboxDispatcherTest {
             payload = """{"body":"hi"}""",
             status = OutboxStatus.PENDING,
             attempts = 0,
-            notBefore = LocalDateTime.now(clock)
+            notBefore = Instant.now(clock)
         )
         every { smsSender.send(any(), any()) } throws RuntimeException("upstream boom")
         val savedSlot = slot<Outbox>()
@@ -155,7 +155,7 @@ class OutboxDispatcherTest {
         Assertions.assertEquals(OutboxStatus.PENDING, saved.status)
         Assertions.assertEquals("upstream boom", saved.lastError)
         // backoff = 30 seconds after 1st failure
-        Assertions.assertEquals(LocalDateTime.now(clock).plusSeconds(30), saved.notBefore)
+        Assertions.assertEquals(Instant.now(clock).plus(Duration.ofSeconds(30)), saved.notBefore)
     }
 
     @Test
@@ -168,7 +168,7 @@ class OutboxDispatcherTest {
             payload = """{"body":"hi"}""",
             status = OutboxStatus.PENDING,
             attempts = 1,
-            notBefore = LocalDateTime.now(clock)
+            notBefore = Instant.now(clock)
         )
         every { smsSender.send(any(), any()) } throws RuntimeException("still broken")
         val savedSlot = slot<Outbox>()
@@ -182,7 +182,7 @@ class OutboxDispatcherTest {
         Assertions.assertEquals(2, saved.attempts)
         Assertions.assertEquals(OutboxStatus.PENDING, saved.status)
         // backoff = 2 minutes after 2nd failure
-        Assertions.assertEquals(LocalDateTime.now(clock).plusMinutes(2), saved.notBefore)
+        Assertions.assertEquals(Instant.now(clock).plus(Duration.ofMinutes(2)), saved.notBefore)
     }
 
     @Test
@@ -195,7 +195,7 @@ class OutboxDispatcherTest {
             payload = """{"body":"hi"}""",
             status = OutboxStatus.PENDING,
             attempts = 2,
-            notBefore = LocalDateTime.now(clock)
+            notBefore = Instant.now(clock)
         )
         every { smsSender.send(any(), any()) } throws RuntimeException("dead")
         val savedSlot = slot<Outbox>()

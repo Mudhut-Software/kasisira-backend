@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.security.SecureRandom
 import java.time.Clock
 import java.time.Duration
-import java.time.LocalDateTime
+import java.time.Instant
 
 /**
  * Default [OtpService] implementation.
@@ -40,7 +40,7 @@ class OtpServiceImpl(
 
     @Transactional
     override fun requestOtp(phoneNumberE164: String, purpose: OtpPurpose) {
-        val now = LocalDateTime.now(clock)
+        val now = Instant.now(clock)
         val windowStart = now.minus(RATE_WINDOW)
 
         val recentCount = otpChallengeRepository.countRecent(phoneNumberE164, windowStart)
@@ -70,7 +70,7 @@ class OtpServiceImpl(
 
     @Transactional(noRollbackFor = [InvalidOtpException::class])
     override fun verifyOtp(phoneNumberE164: String, code: String, purpose: OtpPurpose): Boolean {
-        val now = LocalDateTime.now(clock)
+        val now = Instant.now(clock)
 
         val challenge = otpChallengeRepository
             .findLatestActive(phoneNumberE164, purpose, now)

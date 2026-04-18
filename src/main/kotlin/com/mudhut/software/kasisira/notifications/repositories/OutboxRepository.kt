@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Repository
 interface OutboxRepository : JpaRepository<Outbox, Long> {
@@ -16,5 +16,5 @@ interface OutboxRepository : JpaRepository<Outbox, Long> {
         WHERE o.status = :status AND o.notBefore <= :now
         ORDER BY o.notBefore ASC
     """)
-    fun findDue(@Param("status") status: OutboxStatus, @Param("now") now: LocalDateTime, pageable: Pageable): List<Outbox>
+    fun findDue(@Param("status") status: OutboxStatus, @Param("now") now: Instant, pageable: Pageable): List<Outbox>
 }

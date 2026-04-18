@@ -2,7 +2,7 @@ package com.mudhut.software.kasisira.profiles.entities
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(name = "refresh_tokens", indexes = [
@@ -22,17 +22,17 @@ data class RefreshToken(
     val user: User,
 
     @Column(name = "expires_at", nullable = false)
-    val expiresAt: LocalDateTime,
+    val expiresAt: Instant,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
-    val createdAt: LocalDateTime? = null,
+    val createdAt: Instant? = null,
 
     @Column(name = "revoked", nullable = false)
     var revoked: Boolean = false,
 
     @Column(name = "revoked_at")
-    var revokedAt: LocalDateTime? = null,
+    var revokedAt: Instant? = null,
 
     @Column(name = "device_info", length = 500)
     val deviceInfo: String? = null,
@@ -41,7 +41,7 @@ data class RefreshToken(
     val ipAddress: String? = null
 ) {
     fun isExpired(): Boolean {
-        return LocalDateTime.now().isAfter(expiresAt)
+        return Instant.now().isAfter(expiresAt)
     }
 
     fun isValid(): Boolean {

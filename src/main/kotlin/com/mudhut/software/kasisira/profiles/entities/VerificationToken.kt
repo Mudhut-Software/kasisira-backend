@@ -2,7 +2,7 @@ package com.mudhut.software.kasisira.profiles.entities
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(name = "verification_tokens", indexes = [
@@ -26,20 +26,20 @@ data class VerificationToken(
     val tokenType: TokenType = TokenType.EMAIL_VERIFICATION,
 
     @Column(name = "expires_at", nullable = false)
-    val expiresAt: LocalDateTime,
+    val expiresAt: Instant,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
-    val createdAt: LocalDateTime? = null,
+    val createdAt: Instant? = null,
 
     @Column(name = "used_at")
-    var usedAt: LocalDateTime? = null,
+    var usedAt: Instant? = null,
 
     @Column(name = "is_used", nullable = false)
     var isUsed: Boolean = false
 ) {
     fun isExpired(): Boolean {
-        return LocalDateTime.now().isAfter(expiresAt)
+        return Instant.now().isAfter(expiresAt)
     }
 
     fun isValid(): Boolean {

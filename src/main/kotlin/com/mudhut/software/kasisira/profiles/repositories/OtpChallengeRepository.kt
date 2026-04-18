@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Repository
 interface OtpChallengeRepository : JpaRepository<OtpChallenge, Long> {
@@ -20,7 +20,7 @@ interface OtpChallengeRepository : JpaRepository<OtpChallenge, Long> {
     fun findLatestActive(
         @Param("phone") phone: String,
         @Param("purpose") purpose: OtpPurpose,
-        @Param("now") now: LocalDateTime
+        @Param("now") now: Instant
     ): List<OtpChallenge>
 
     @Query("""
@@ -29,6 +29,6 @@ interface OtpChallengeRepository : JpaRepository<OtpChallenge, Long> {
     """)
     fun countRecent(
         @Param("phone") phone: String,
-        @Param("since") since: LocalDateTime
+        @Param("since") since: Instant
     ): Long
 }

@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
 import java.time.Clock
 import java.time.Duration
-import java.time.LocalDateTime
+import java.time.Instant
 
 /**
  * Consumes a single [Outbox] row: deserializes the payload, calls the matching
@@ -78,7 +78,7 @@ class OutboxDispatcher(
 
     private fun markSent(row: Outbox) {
         row.status = OutboxStatus.SENT
-        row.processedAt = LocalDateTime.now(clock)
+        row.processedAt = Instant.now(clock)
         row.lastError = null
         outboxRepository.save(row)
     }
@@ -97,7 +97,7 @@ class OutboxDispatcher(
         } else {
             row.status = OutboxStatus.PENDING
             val backoff = BACKOFF[nextAttempts - 1]
-            row.notBefore = LocalDateTime.now(clock).plus(backoff)
+            row.notBefore = Instant.now(clock).plus(backoff)
             log.info(
                 "Outbox row id={} channel={} transient failure (attempt {}): {}. Retry at {}",
                 row.id, row.channel, nextAttempts, e.message, row.notBefore

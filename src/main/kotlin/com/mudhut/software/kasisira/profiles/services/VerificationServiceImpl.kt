@@ -10,7 +10,8 @@ import com.mudhut.software.kasisira.utils.exceptions.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 
 @Service
@@ -49,7 +50,7 @@ class VerificationServiceImpl : VerificationService {
             token = token,
             user = user,
             tokenType = tokenType,
-            expiresAt = LocalDateTime.now().plusHours(expiryHours)
+            expiresAt = Instant.now().plus(Duration.ofHours(expiryHours))
         )
 
         verificationTokenRepository.save(verificationToken)
@@ -78,7 +79,7 @@ class VerificationServiceImpl : VerificationService {
 
         // Mark token as used
         verificationToken.isUsed = true
-        verificationToken.usedAt = LocalDateTime.now()
+        verificationToken.usedAt = Instant.now()
         verificationTokenRepository.save(verificationToken)
 
         return verificationToken.user
@@ -110,7 +111,7 @@ class VerificationServiceImpl : VerificationService {
     }
 
     override fun deleteExpiredTokens() {
-        verificationTokenRepository.deleteByExpiresAtBeforeAndIsUsedTrue(LocalDateTime.now())
+        verificationTokenRepository.deleteByExpiresAtBeforeAndIsUsedTrue(Instant.now())
     }
 
     override fun invalidateUserTokens(userId: Long, tokenType: TokenType) {

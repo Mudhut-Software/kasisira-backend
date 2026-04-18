@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.LocalDateTime
+import java.time.Instant
 
 @ExtendWith(MockKExtension::class)
 class RoleServiceImplTest {
@@ -38,8 +38,8 @@ class RoleServiceImplTest {
             emailVerified = true,
             isActive = true,
             isEnabled = true,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
     }
 

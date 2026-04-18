@@ -2,7 +2,7 @@ package com.mudhut.software.kasisira.profiles.entities
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -34,7 +34,7 @@ data class UserRole(
 
     @Column(name = "granted_at", nullable = false, updatable = false)
     @CreationTimestamp
-    val grantedAt: LocalDateTime? = null
+    val grantedAt: Instant? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

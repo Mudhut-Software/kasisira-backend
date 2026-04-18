@@ -1,6 +1,6 @@
 package com.mudhut.software.kasisira.profiles.models.response
 
-import java.time.LocalDateTime
+import java.time.Instant
 
 data class ContactResponse(
     val id: Long,
@@ -8,6 +8,6 @@ data class ContactResponse(
     val isPrimary: Boolean,
     val isVerified: Boolean,
     val label: String?,
-    val createdAt: LocalDateTime?,
-    val updatedAt: LocalDateTime?
+    val createdAt: Instant?,
+    val updatedAt: Instant?
 )

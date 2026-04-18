@@ -5,7 +5,7 @@ import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.profiles.entities.VerificationToken
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 @Repository
@@ -17,7 +17,7 @@ interface VerificationTokenRepository : JpaRepository<VerificationToken, Long> {
 
     fun findByUserIdAndTokenType(userId: Long, tokenType: TokenType): List<VerificationToken>
 
-    fun deleteByExpiresAtBeforeAndIsUsedTrue(expiresAt: LocalDateTime)
+    fun deleteByExpiresAtBeforeAndIsUsedTrue(expiresAt: Instant)
 
     fun deleteByUserAndTokenType(user: User, tokenType: TokenType)
 }

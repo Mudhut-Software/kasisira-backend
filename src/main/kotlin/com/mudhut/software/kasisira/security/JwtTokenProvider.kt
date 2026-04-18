@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import javax.crypto.SecretKey
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.*
 
 /**
@@ -85,7 +85,7 @@ class JwtTokenProvider {
         val accessToken = generateAccessToken(user.id, user.email)
         val refreshToken = generateRefreshToken(user.id)
 
-        val expiresAt = LocalDateTime.now().plusSeconds(refreshTokenExpirationMs / 1000)
+        val expiresAt = Instant.now().plusSeconds(refreshTokenExpirationMs / 1000)
         refreshTokenRepository.save(
             RefreshToken(
                 token = refreshToken,

@@ -10,9 +10,10 @@
 --   * IDs are BIGINT, populated from per-entity sequences named <table>_seq
 --     with INCREMENT BY 50 (Hibernate 6 default for GenerationType.SEQUENCE
 --     without an explicit @SequenceGenerator).
---   * Timestamp columns use TIMESTAMP WITHOUT TIME ZONE because the entities
---     use java.time.LocalDateTime, which Hibernate maps to TIMESTAMP. Switching
---     these columns to TIMESTAMPTZ would fail JPA validation.
+--   * Timestamp columns use TIMESTAMP WITH TIME ZONE (TIMESTAMPTZ) so that the
+--     driver round-trips instants in UTC regardless of the JVM default zone.
+--     The corresponding entity fields are java.time.Instant and the JDBC layer
+--     is pinned to UTC via hibernate.jdbc.time_zone in application.properties.
 --   * Indexes and unique constraints mirror the @Index / unique=true / @Column
 --     annotations on the entities exactly.
 --   * Foreign-key ON DELETE policy: FKs that mirror a JPA CascadeType.ALL /
@@ -48,9 +49,9 @@ CREATE TABLE users (
     email_verified  BOOLEAN      NOT NULL,
     is_active       BOOLEAN      NOT NULL,
     is_enabled      BOOLEAN      NOT NULL,
-    created_at      TIMESTAMP    NOT NULL,
-    updated_at      TIMESTAMP    NOT NULL,
-    last_login      TIMESTAMP,
+    created_at      TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at      TIMESTAMP WITH TIME ZONE NOT NULL,
+    last_login      TIMESTAMP WITH TIME ZONE,
     CONSTRAINT pk_users PRIMARY KEY (id)
 );
 
@@ -70,8 +71,8 @@ CREATE TABLE contacts (
     is_primary   BOOLEAN     NOT NULL,
     is_verified  BOOLEAN     NOT NULL,
     label        VARCHAR(100),
-    created_at   TIMESTAMP   NOT NULL,
-    updated_at   TIMESTAMP   NOT NULL,
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at   TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT pk_contacts PRIMARY KEY (id),
     CONSTRAINT fk_contacts_user
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
@@ -87,10 +88,10 @@ CREATE TABLE refresh_tokens (
     id          BIGINT       NOT NULL,
     token       VARCHAR(500) NOT NULL,
     user_id     BIGINT       NOT NULL,
-    expires_at  TIMESTAMP    NOT NULL,
-    created_at  TIMESTAMP    NOT NULL,
+    expires_at  TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL,
     revoked     BOOLEAN      NOT NULL,
-    revoked_at  TIMESTAMP,
+    revoked_at  TIMESTAMP WITH TIME ZONE,
     device_info VARCHAR(500),
     ip_address  VARCHAR(50),
     CONSTRAINT pk_refresh_tokens PRIMARY KEY (id),
@@ -110,9 +111,9 @@ CREATE TABLE verification_tokens (
     token      VARCHAR(255) NOT NULL,
     user_id    BIGINT       NOT NULL,
     token_type VARCHAR(20)  NOT NULL,
-    expires_at TIMESTAMP    NOT NULL,
-    created_at TIMESTAMP    NOT NULL,
-    used_at    TIMESTAMP,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    used_at    TIMESTAMP WITH TIME ZONE,
     is_used    BOOLEAN      NOT NULL,
     CONSTRAINT pk_verification_tokens PRIMARY KEY (id),
     CONSTRAINT fk_verification_tokens_user
@@ -151,8 +152,8 @@ CREATE TABLE properties (
     features           TEXT,
     status             VARCHAR(20)    NOT NULL,
     view_count         BIGINT         NOT NULL,
-    created_at         TIMESTAMP      NOT NULL,
-    updated_at         TIMESTAMP      NOT NULL,
+    created_at         TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at         TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT pk_properties PRIMARY KEY (id),
     CONSTRAINT fk_properties_owner
         FOREIGN KEY (owner_id) REFERENCES users (id) ON DELETE RESTRICT
@@ -181,8 +182,8 @@ CREATE TABLE property_media (
     display_order INTEGER      NOT NULL,
     file_size     BIGINT,
     mime_type     VARCHAR(100),
-    created_at    TIMESTAMP    NOT NULL,
-    updated_at    TIMESTAMP    NOT NULL,
+    created_at    TIMESTAMP WITH TIME ZONE NOT NULL,
+    updated_at    TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT pk_property_media PRIMARY KEY (id),
     CONSTRAINT fk_property_media_property
         FOREIGN KEY (property_id) REFERENCES properties (id) ON DELETE CASCADE

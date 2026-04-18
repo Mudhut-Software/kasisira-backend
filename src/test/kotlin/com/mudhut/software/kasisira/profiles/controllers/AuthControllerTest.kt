@@ -30,7 +30,7 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
-import java.time.LocalDateTime
+import java.time.Instant
 
 @WebMvcTest(
     controllers = [AuthController::class],
@@ -71,8 +71,8 @@ class AuthControllerTest {
             isActive = false,
             isEnabled = true,
             contacts = emptyList(),
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
             lastLogin = null
         )
 

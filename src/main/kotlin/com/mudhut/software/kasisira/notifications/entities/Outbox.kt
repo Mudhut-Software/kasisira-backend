@@ -3,7 +3,7 @@ package com.mudhut.software.kasisira.notifications.entities
 import jakarta.persistence.*
 import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.type.SqlTypes
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(name = "outbox", indexes = [Index(name = "idx_outbox_due", columnList = "not_before")])
@@ -32,16 +32,16 @@ data class Outbox(
     var attempts: Int = 0,
 
     @Column(name = "not_before", nullable = false)
-    var notBefore: LocalDateTime = LocalDateTime.now(),
+    var notBefore: Instant = Instant.now(),
 
     @Column(name = "last_error", columnDefinition = "text")
     var lastError: String? = null,
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    val createdAt: LocalDateTime = LocalDateTime.now(),
+    val createdAt: Instant = Instant.now(),
 
     @Column(name = "processed_at")
-    var processedAt: LocalDateTime? = null
+    var processedAt: Instant? = null
 ) {
     override fun equals(other: Any?): Boolean = this === other || (other is Outbox && id != 0L && id == other.id)
     override fun hashCode(): Int = id.hashCode()

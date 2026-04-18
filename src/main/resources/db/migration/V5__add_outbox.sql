@@ -14,10 +14,10 @@ CREATE TABLE outbox (
     payload     JSONB         NOT NULL,
     status      VARCHAR(20)   NOT NULL DEFAULT 'PENDING',
     attempts    INTEGER       NOT NULL DEFAULT 0,
-    not_before  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    not_before  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_error  TEXT,
-    created_at  TIMESTAMP     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    processed_at TIMESTAMP,
+    created_at  TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    processed_at TIMESTAMP WITH TIME ZONE,
     CONSTRAINT pk_outbox PRIMARY KEY (id),
     CONSTRAINT ck_outbox_channel CHECK (channel IN ('SMS', 'EMAIL', 'INAPP')),
     CONSTRAINT ck_outbox_status  CHECK (status  IN ('PENDING', 'SENT', 'FAILED'))

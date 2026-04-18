@@ -8,7 +8,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.*
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 
 class PropertyMediaMapperTest {
 
@@ -57,8 +57,8 @@ class PropertyMediaMapperTest {
             displayOrder = 0,
             fileSize = 1024000,
             mimeType = "image/jpeg",
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
     }
 

@@ -1,7 +1,7 @@
 package com.mudhut.software.kasisira.properties.models.response
 
 import com.mudhut.software.kasisira.properties.entities.MediaType
-import java.time.LocalDateTime
+import java.time.Instant
 
 data class PropertyMediaResponse(
     val id: Long,
@@ -11,5 +11,5 @@ data class PropertyMediaResponse(
     val description: String?,
     val isPrimary: Boolean,
     val displayOrder: Int,
-    val createdAt: LocalDateTime?
+    val createdAt: Instant?
 )

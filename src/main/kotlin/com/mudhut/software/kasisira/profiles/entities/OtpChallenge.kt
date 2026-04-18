@@ -2,7 +2,7 @@ package com.mudhut.software.kasisira.profiles.entities
 
 import jakarta.persistence.*
 import org.hibernate.annotations.CreationTimestamp
-import java.time.LocalDateTime
+import java.time.Instant
 
 @Entity
 @Table(
@@ -29,17 +29,17 @@ data class OtpChallenge(
     val purpose: OtpPurpose,
 
     @Column(name = "expires_at", nullable = false)
-    val expiresAt: LocalDateTime,
+    val expiresAt: Instant,
 
     @Column(name = "consumed_at")
-    var consumedAt: LocalDateTime? = null,
+    var consumedAt: Instant? = null,
 
     @Column(nullable = false)
     var attempts: Int = 0,
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp
-    val createdAt: LocalDateTime? = null
+    val createdAt: Instant? = null
 ) {
     override fun equals(other: Any?): Boolean = this === other || (other is OtpChallenge && id != 0L && id == other.id)
     override fun hashCode(): Int = id.hashCode()

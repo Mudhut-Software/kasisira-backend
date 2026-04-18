@@ -21,8 +21,8 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.crypto.password.PasswordEncoder
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
-import java.time.LocalDateTime
 import java.time.ZoneOffset
 
 @ExtendWith(MockKExtension::class)
@@ -77,7 +77,7 @@ class OtpServiceImplTest {
         Assertions.assertEquals(6, code.length)
         Assertions.assertTrue(code.all { it.isDigit() }, "Code must be all digits, got: $code")
         // Expiry is 10 minutes from fixed now
-        val expectedExpiry = LocalDateTime.ofInstant(fixedInstant, ZoneOffset.UTC).plusMinutes(10)
+        val expectedExpiry = fixedInstant.plus(Duration.ofMinutes(10))
         Assertions.assertEquals(expectedExpiry, saved.expiresAt)
         Assertions.assertEquals(0, saved.attempts)
         Assertions.assertNull(saved.consumedAt)
@@ -127,13 +127,13 @@ class OtpServiceImplTest {
     @Test
     fun `verifyOtp returns true when code matches latest active challenge and marks consumed`() {
         // Given
-        val now = LocalDateTime.ofInstant(fixedInstant, ZoneOffset.UTC)
+        val now = fixedInstant
         val challenge = OtpChallenge(
             id = 42L,
             phoneNumber = phone,
             codeHash = "bcrypt-hash",
             purpose = OtpPurpose.LOGIN,
-            expiresAt = now.plusMinutes(5),
+            expiresAt = now.plus(Duration.ofMinutes(5)),
             consumedAt = null,
             attempts = 0
         )
@@ -173,13 +173,13 @@ class OtpServiceImplTest {
     @Test
     fun `verifyOtp increments attempts and throws on wrong code`() {
         // Given
-        val now = LocalDateTime.ofInstant(fixedInstant, ZoneOffset.UTC)
+        val now = fixedInstant
         val challenge = OtpChallenge(
             id = 42L,
             phoneNumber = phone,
             codeHash = "bcrypt-hash",
             purpose = OtpPurpose.LOGIN,
-            expiresAt = now.plusMinutes(5),
+            expiresAt = now.plus(Duration.ofMinutes(5)),
             consumedAt = null,
             attempts = 1
         )
@@ -200,13 +200,13 @@ class OtpServiceImplTest {
     @Test
     fun `verifyOtp throws locked exception when attempts already maxed out`() {
         // Given — already at max attempts, should NOT increment further
-        val now = LocalDateTime.ofInstant(fixedInstant, ZoneOffset.UTC)
+        val now = fixedInstant
         val challenge = OtpChallenge(
             id = 42L,
             phoneNumber = phone,
             codeHash = "bcrypt-hash",
             purpose = OtpPurpose.LOGIN,
-            expiresAt = now.plusMinutes(5),
+            expiresAt = now.plus(Duration.ofMinutes(5)),
             consumedAt = null,
             attempts = 5
         )

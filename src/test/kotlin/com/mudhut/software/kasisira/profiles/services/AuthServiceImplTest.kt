@@ -20,7 +20,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
-import java.time.LocalDateTime
+import java.time.Duration
+import java.time.Instant
 import java.util.*
 
 @ExtendWith(MockKExtension::class)
@@ -62,8 +63,8 @@ class AuthServiceImplTest {
             emailVerified = true,
             isActive = true,
             isEnabled = true,
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now()
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
         )
 
         testUserResponse = UserResponse(
@@ -76,8 +77,8 @@ class AuthServiceImplTest {
             isActive = true,
             isEnabled = true,
             contacts = emptyList(),
-            createdAt = LocalDateTime.now(),
-            updatedAt = LocalDateTime.now(),
+            createdAt = Instant.now(),
+            updatedAt = Instant.now(),
             lastLogin = null
         )
 
@@ -85,7 +86,7 @@ class AuthServiceImplTest {
             id = 1L,
             token = "valid-refresh-token",
             user = testUser,
-            expiresAt = LocalDateTime.now().plusDays(7),
+            expiresAt = Instant.now().plus(Duration.ofDays(7)),
             revoked = false
         )
 
@@ -287,7 +288,7 @@ class AuthServiceImplTest {
                 id = 1L,
                 token = "expired-token",
                 user = testUser,
-                expiresAt = LocalDateTime.now().minusDays(1),
+                expiresAt = Instant.now().minus(Duration.ofDays(1)),
                 revoked = false
             )
             every { jwtTokenProvider.validateToken("expired-token") } returns true

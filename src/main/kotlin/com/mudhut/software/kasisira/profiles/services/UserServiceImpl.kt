@@ -18,7 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.time.LocalDateTime
+import java.time.Instant
 import java.util.regex.Pattern
 
 @Service
@@ -152,7 +152,7 @@ class UserServiceImpl : UserService {
         if (existingUser.isPresent) {
             // Update last login and return existing user
             val user = existingUser.get()
-            val updatedUser = user.copy(lastLogin = LocalDateTime.now())
+            val updatedUser = user.copy(lastLogin = Instant.now())
             val saved = userRepository.save(updatedUser)
             return userMapper.toResponse(saved)
         }
@@ -270,7 +270,7 @@ class UserServiceImpl : UserService {
         val user = userRepository.findById(userId)
             .orElseThrow { UserNotFoundException("User with id $userId not found") }
 
-        val updatedUser = user.copy(lastLogin = LocalDateTime.now())
+        val updatedUser = user.copy(lastLogin = Instant.now())
         userRepository.save(updatedUser)
     }
 

@@ -7,7 +7,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import java.time.Clock
-import java.time.LocalDateTime
+import java.time.Instant
 
 /**
  * Scheduled drainer for the notifications outbox.
@@ -32,7 +32,7 @@ class OutboxWorker(
 
     @Scheduled(fixedDelayString = "\${notifications.outbox.fixed-delay-ms:5000}")
     fun drain() {
-        val now = LocalDateTime.now(clock)
+        val now = Instant.now(clock)
         val due = outboxRepository.findDue(OutboxStatus.PENDING, now, PageRequest.of(0, BATCH_SIZE))
         if (due.isEmpty()) return
         log.debug("Outbox draining {} due rows", due.size)

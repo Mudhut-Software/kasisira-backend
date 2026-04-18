@@ -8,8 +8,8 @@
 --     (Hibernate 6 default). The entity uses an explicit @SequenceGenerator
 --     because Hibernate's default sequence name would be derived from the
 --     entity class ("user_role_seq") rather than the table ("user_roles_seq").
---   * Timestamp column uses TIMESTAMP WITHOUT TIME ZONE to match the entity's
---     LocalDateTime field; Hibernate populates the value via @CreationTimestamp
+--   * Timestamp column uses TIMESTAMP WITH TIME ZONE to match the entity's
+--     java.time.Instant field; Hibernate populates the value via @CreationTimestamp
 --     so no SQL DEFAULT is declared.
 --   * FK to users uses ON DELETE CASCADE so role grants disappear with the user
 --     (a role grant is meaningless without its owner).
@@ -23,7 +23,7 @@ CREATE TABLE user_roles (
     id         BIGINT       NOT NULL,
     user_id    BIGINT       NOT NULL,
     role_name  VARCHAR(20)  NOT NULL,
-    granted_at TIMESTAMP    NOT NULL,
+    granted_at TIMESTAMP WITH TIME ZONE NOT NULL,
     CONSTRAINT pk_user_roles PRIMARY KEY (id),
     CONSTRAINT fk_user_roles_user
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,

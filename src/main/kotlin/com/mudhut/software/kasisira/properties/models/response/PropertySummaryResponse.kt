@@ -5,7 +5,7 @@ import com.mudhut.software.kasisira.properties.entities.PropertyStatus
 import com.mudhut.software.kasisira.properties.entities.PropertyType
 import com.mudhut.software.kasisira.properties.entities.RentalDuration
 import java.math.BigDecimal
-import java.time.LocalDateTime
+import java.time.Instant
 
 data class PropertySummaryResponse(
     val id: Long,
@@ -23,5 +23,5 @@ data class PropertySummaryResponse(
     val status: PropertyStatus,
     val primaryImage: String?,
     val viewCount: Long,
-    val createdAt: LocalDateTime?
+    val createdAt: Instant?
 )
