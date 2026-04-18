@@ -307,6 +307,32 @@ class GlobalExceptionHandler {
             .body(ErrorResponse(ERROR_CODE_OTP, ex.message ?: "Invalid OTP"))
     }
 
+    // Org / membership / invite exception handlers
+    @ExceptionHandler(OrgNotFoundException::class)
+    fun handleOrgNotFound(ex: OrgNotFoundException): ResponseEntity<ErrorResponse> {
+        log.warn("Org not found: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.NOT_FOUND)
+            .body(ErrorResponse("ORG_NOT_FOUND", ex.message ?: "Org not found"))
+    }
+
+    @ExceptionHandler(NotOrgMemberException::class, PermissionDeniedException::class)
+    fun handleOrgAuthzErrors(ex: RuntimeException): ResponseEntity<ErrorResponse> {
+        log.warn("Org authorization failure: {}", ex.message)
+        // Deliberately return identical response for both to prevent org enumeration via distinguishing "not a member" vs "no permission".
+        return ResponseEntity
+            .status(HttpStatus.FORBIDDEN)
+            .body(ErrorResponse("ACCESS_DENIED", "Access denied"))
+    }
+
+    @ExceptionHandler(InviteExpiredException::class, InviteAlreadyUsedException::class, InviteRevokedException::class)
+    fun handleInviteStateErrors(ex: RuntimeException): ResponseEntity<ErrorResponse> {
+        log.warn("Invite state error: {}", ex.message)
+        return ResponseEntity
+            .status(HttpStatus.GONE)
+            .body(ErrorResponse("INVITE_UNUSABLE", ex.message ?: "Invite cannot be used"))
+    }
+
     // Generic exception handler (catch-all)
     @ExceptionHandler(Exception::class)
     fun handleGenericException(ex: Exception): ResponseEntity<ErrorResponse> {

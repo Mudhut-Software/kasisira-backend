@@ -46,3 +46,16 @@ class UnauthorizedAccessException(message: String) : RuntimeException(message)
 class RateLimitedException(message: String) : RuntimeException(message)
 
 class InvalidOtpException(message: String) : RuntimeException(message)
+
+// Org / membership / invite exceptions
+class OrgNotFoundException(message: String) : RuntimeException(message)
+
+class NotOrgMemberException(message: String) : RuntimeException(message)
+
+class PermissionDeniedException(message: String) : RuntimeException(message)
+
+class InviteExpiredException(message: String) : RuntimeException(message)
+
+class InviteAlreadyUsedException(message: String) : RuntimeException(message)
+
+class InviteRevokedException(message: String) : RuntimeException(message)
