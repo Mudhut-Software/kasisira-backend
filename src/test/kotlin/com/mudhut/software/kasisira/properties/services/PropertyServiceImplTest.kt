@@ -11,7 +11,7 @@ import com.mudhut.software.kasisira.properties.mappers.PropertyMapper
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
 import com.mudhut.software.kasisira.properties.models.request.PropertySearchRequest
 import com.mudhut.software.kasisira.properties.models.request.UpdatePropertyRequest
-import com.mudhut.software.kasisira.properties.models.response.PropertyOwnerResponse
+import com.mudhut.software.kasisira.properties.models.response.PropertyOrgResponse
 import com.mudhut.software.kasisira.properties.models.response.PropertyResponse
 import com.mudhut.software.kasisira.properties.models.response.PropertySummaryResponse
 import com.mudhut.software.kasisira.properties.repositories.PropertyRepository
@@ -92,7 +92,7 @@ class PropertyServiceImplTest {
 
         testPropertyResponse = PropertyResponse(
             id = 1L,
-            owner = PropertyOwnerResponse(1L, "testuser", null),
+            org = PropertyOrgResponse(10L, "Test Org", false),
             title = "Beautiful House",
             description = "A beautiful house for sale",
             propertyType = PropertyType.HOUSE,

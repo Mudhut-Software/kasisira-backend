@@ -1,5 +1,6 @@
 package com.mudhut.software.kasisira.properties.mappers
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.properties.entities.*
@@ -15,6 +16,7 @@ class PropertyMediaMapperTest {
     private lateinit var propertyMediaMapper: PropertyMediaMapper
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
     private lateinit var testMedia: PropertyMedia
 
@@ -33,9 +35,15 @@ class PropertyMediaMapperTest {
             isEnabled = true
         )
 
+        testOrg = OwnerOrg(
+            id = 10L,
+            creator = testUser,
+            name = "Test Org"
+        )
+
         testProperty = Property(
             id = 1L,
-            owner = testUser,
+            ownerOrg = testOrg,
             title = "Beautiful House",
             description = "A beautiful house for sale",
             propertyType = PropertyType.HOUSE,

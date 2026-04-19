@@ -1,5 +1,6 @@
 package com.mudhut.software.kasisira.properties.repositories
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.properties.entities.*
@@ -24,6 +25,7 @@ class PropertyRepositoryTest {
     private lateinit var propertyRepository: PropertyRepository
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
 
     @BeforeEach
@@ -40,9 +42,16 @@ class PropertyRepositoryTest {
         )
         testUser = entityManager.persistAndFlush(testUser)
 
+        testOrg = OwnerOrg(
+            id = 0,
+            creator = testUser,
+            name = "Test Org"
+        )
+        testOrg = entityManager.persistAndFlush(testOrg)
+
         testProperty = Property(
             id = 0,
-            owner = testUser,
+            ownerOrg = testOrg,
             title = "Beautiful House",
             description = "A beautiful house for sale in Kampala",
             propertyType = PropertyType.HOUSE,
@@ -68,7 +77,7 @@ class PropertyRepositoryTest {
             val pageable = PageRequest.of(0, 20)
 
             // When
-            val result = propertyRepository.findByOwnerId(testUser.id, pageable)
+            val result = propertyRepository.findByOwnerOrgId(testOrg.id, pageable)
 
             // Then
             assertEquals(1, result.totalElements)
@@ -81,7 +90,7 @@ class PropertyRepositoryTest {
             val pageable = PageRequest.of(0, 20)
 
             // When
-            val result = propertyRepository.findByOwnerId(testUser.id, pageable)
+            val result = propertyRepository.findByOwnerOrgId(testOrg.id, pageable)
 
             // Then
             assertEquals(0, result.totalElements)
@@ -284,7 +293,7 @@ class PropertyRepositoryTest {
             entityManager.persistAndFlush(testProperty)
             val anotherProperty = Property(
                 id = 0,
-                owner = testUser,
+                ownerOrg = testOrg,
                 title = "Another Property",
                 description = "Another property description",
                 propertyType = PropertyType.HOUSE,
@@ -297,7 +306,7 @@ class PropertyRepositoryTest {
             entityManager.persistAndFlush(anotherProperty)
 
             // When
-            val count = propertyRepository.countByOwnerId(testUser.id)
+            val count = propertyRepository.countByOwnerOrgId(testOrg.id)
 
             // Then
             assertEquals(2, count)
@@ -306,7 +315,7 @@ class PropertyRepositoryTest {
         @Test
         fun `should return zero when owner has no properties`() {
             // When
-            val count = propertyRepository.countByOwnerId(testUser.id)
+            val count = propertyRepository.countByOwnerOrgId(testOrg.id)
 
             // Then
             assertEquals(0, count)
@@ -323,7 +332,7 @@ class PropertyRepositoryTest {
             entityManager.persistAndFlush(testProperty)
             val draftProperty = Property(
                 id = 0,
-                owner = testUser,
+                ownerOrg = testOrg,
                 title = "Draft Property",
                 description = "A draft property description",
                 propertyType = PropertyType.HOUSE,
@@ -336,8 +345,8 @@ class PropertyRepositoryTest {
             entityManager.persistAndFlush(draftProperty)
 
             // When
-            val activeCount = propertyRepository.countByOwnerIdAndStatus(testUser.id, PropertyStatus.ACTIVE)
-            val draftCount = propertyRepository.countByOwnerIdAndStatus(testUser.id, PropertyStatus.DRAFT)
+            val activeCount = propertyRepository.countByOwnerOrgIdAndStatus(testOrg.id, PropertyStatus.ACTIVE)
+            val draftCount = propertyRepository.countByOwnerOrgIdAndStatus(testOrg.id, PropertyStatus.DRAFT)
 
             // Then
             assertEquals(1, activeCount)
