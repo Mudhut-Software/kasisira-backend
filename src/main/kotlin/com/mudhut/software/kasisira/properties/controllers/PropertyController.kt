@@ -1,5 +1,7 @@
 package com.mudhut.software.kasisira.properties.controllers
 
+import com.mudhut.software.kasisira.owner_org.entities.Permission
+import com.mudhut.software.kasisira.owner_org.services.MembershipService
 import com.mudhut.software.kasisira.properties.entities.ListingType
 import com.mudhut.software.kasisira.properties.entities.PropertyType
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
@@ -11,7 +13,6 @@ import com.mudhut.software.kasisira.properties.models.response.PropertySummaryRe
 import com.mudhut.software.kasisira.properties.services.PropertyService
 import com.mudhut.software.kasisira.security.UserPrincipal
 import jakarta.validation.Valid
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
@@ -22,29 +23,54 @@ import org.springframework.web.bind.annotation.*
 import java.math.BigDecimal
 
 @RestController
-@RequestMapping("/v1/properties")
-class PropertyController {
+class PropertyController(
+    private val propertyService: PropertyService,
+    private val membershipService: MembershipService
+) {
 
-    @Autowired
-    private lateinit var propertyService: PropertyService
+    // --- Org-scoped endpoints ---
 
-    @PostMapping
+    @PostMapping("/v1/orgs/{orgId}/properties")
     fun createProperty(
+        @PathVariable orgId: Long,
         @AuthenticationPrincipal userPrincipal: UserPrincipal,
         @Valid @RequestBody request: CreatePropertyRequest
     ): ResponseEntity<PropertyResponse> {
-        val property = propertyService.createProperty(userPrincipal.id, request)
+        val property = propertyService.createProperty(userPrincipal.id, orgId, request)
         return ResponseEntity.status(HttpStatus.CREATED).body(property)
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/v1/orgs/{orgId}/properties")
+    fun getPropertiesForOrg(
+        @PathVariable orgId: Long,
+        @AuthenticationPrincipal userPrincipal: UserPrincipal,
+        @PageableDefault(size = 20) pageable: Pageable
+    ): ResponseEntity<Page<PropertySummaryResponse>> {
+        membershipService.requirePermission(userPrincipal.id, orgId, Permission.MANAGE_LISTINGS)
+        val properties = propertyService.getPropertiesByOrg(orgId, pageable)
+        return ResponseEntity.ok(properties)
+    }
+
+    @GetMapping("/v1/orgs/{orgId}/properties/stats")
+    fun getPropertyStatsForOrg(
+        @PathVariable orgId: Long,
+        @AuthenticationPrincipal userPrincipal: UserPrincipal
+    ): ResponseEntity<Map<String, Any>> {
+        membershipService.requirePermission(userPrincipal.id, orgId, Permission.MANAGE_LISTINGS)
+        val stats = propertyService.getPropertyStatsByOrg(orgId)
+        return ResponseEntity.ok(stats)
+    }
+
+    // --- Per-resource endpoints (public reads + authorised mutations) ---
+
+    @GetMapping("/v1/properties/{id}")
     fun getProperty(@PathVariable id: Long): ResponseEntity<PropertyResponse> {
         propertyService.incrementViewCount(id)
         val property = propertyService.getPropertyById(id)
         return ResponseEntity.ok(property)
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/v1/properties/{id}")
     fun updateProperty(
         @PathVariable id: Long,
         @AuthenticationPrincipal userPrincipal: UserPrincipal,
@@ -54,7 +80,7 @@ class PropertyController {
         return ResponseEntity.ok(property)
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/v1/properties/{id}")
     fun deleteProperty(
         @PathVariable id: Long,
         @AuthenticationPrincipal userPrincipal: UserPrincipal
@@ -63,7 +89,19 @@ class PropertyController {
         return ResponseEntity.noContent().build()
     }
 
-    @GetMapping
+    @PatchMapping("/v1/properties/{id}/status")
+    fun updatePropertyStatus(
+        @PathVariable id: Long,
+        @AuthenticationPrincipal userPrincipal: UserPrincipal,
+        @Valid @RequestBody request: UpdatePropertyStatusRequest
+    ): ResponseEntity<PropertyResponse> {
+        val property = propertyService.updatePropertyStatus(id, userPrincipal.id, request.status)
+        return ResponseEntity.ok(property)
+    }
+
+    // --- Public list/search endpoints ---
+
+    @GetMapping("/v1/properties")
     fun getActiveProperties(
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<PropertySummaryResponse>> {
@@ -71,7 +109,7 @@ class PropertyController {
         return ResponseEntity.ok(properties)
     }
 
-    @GetMapping("/search")
+    @GetMapping("/v1/properties/search")
     fun searchProperties(
         @RequestParam(required = false) propertyType: PropertyType?,
         @RequestParam(required = false) listingType: ListingType?,
@@ -93,24 +131,7 @@ class PropertyController {
         return ResponseEntity.ok(properties)
     }
 
-    @GetMapping("/my-properties")
-    fun getMyProperties(
-        @AuthenticationPrincipal userPrincipal: UserPrincipal,
-        @PageableDefault(size = 20) pageable: Pageable
-    ): ResponseEntity<Page<PropertySummaryResponse>> {
-        val properties = propertyService.getPropertiesByOwner(userPrincipal.id, pageable)
-        return ResponseEntity.ok(properties)
-    }
-
-    @GetMapping("/my-properties/stats")
-    fun getMyPropertyStats(
-        @AuthenticationPrincipal userPrincipal: UserPrincipal
-    ): ResponseEntity<Map<String, Any>> {
-        val stats = propertyService.getPropertyStatsByOwner(userPrincipal.id)
-        return ResponseEntity.ok(stats)
-    }
-
-    @GetMapping("/type/{propertyType}")
+    @GetMapping("/v1/properties/type/{propertyType}")
     fun getPropertiesByType(
         @PathVariable propertyType: PropertyType,
         @PageableDefault(size = 20) pageable: Pageable
@@ -119,22 +140,12 @@ class PropertyController {
         return ResponseEntity.ok(properties)
     }
 
-    @GetMapping("/listing/{listingType}")
+    @GetMapping("/v1/properties/listing/{listingType}")
     fun getPropertiesByListingType(
         @PathVariable listingType: ListingType,
         @PageableDefault(size = 20) pageable: Pageable
     ): ResponseEntity<Page<PropertySummaryResponse>> {
         val properties = propertyService.getPropertiesByListingType(listingType, pageable)
         return ResponseEntity.ok(properties)
-    }
-
-    @PatchMapping("/{id}/status")
-    fun updatePropertyStatus(
-        @PathVariable id: Long,
-        @AuthenticationPrincipal userPrincipal: UserPrincipal,
-        @Valid @RequestBody request: UpdatePropertyStatusRequest
-    ): ResponseEntity<PropertyResponse> {
-        val property = propertyService.updatePropertyStatus(id, userPrincipal.id, request.status)
-        return ResponseEntity.ok(property)
     }
 }

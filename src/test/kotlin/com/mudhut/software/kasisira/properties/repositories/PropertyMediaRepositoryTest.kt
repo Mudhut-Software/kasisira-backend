@@ -1,7 +1,9 @@
 package com.mudhut.software.kasisira.properties.repositories
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.properties.aProperty
 import com.mudhut.software.kasisira.properties.entities.*
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions
@@ -23,6 +25,7 @@ class PropertyMediaRepositoryTest {
     private lateinit var propertyMediaRepository: PropertyMediaRepository
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
     private lateinit var testMedia: PropertyMedia
 
@@ -40,16 +43,15 @@ class PropertyMediaRepositoryTest {
         )
         testUser = entityManager.persistAndFlush(testUser)
 
-        testProperty = Property(
+        testOrg = OwnerOrg(
             id = 0,
-            owner = testUser,
-            title = "Beautiful House",
-            description = "A beautiful house for sale in Kampala",
-            propertyType = PropertyType.HOUSE,
-            listingType = ListingType.FOR_SALE,
-            price = BigDecimal("500000000"),
-            currency = "UGX",
-            city = "Kampala",
+            creator = testUser,
+            name = "Test Org"
+        )
+        testOrg = entityManager.persistAndFlush(testOrg)
+
+        testProperty = aProperty(
+            ownerOrg = testOrg,
             status = PropertyStatus.ACTIVE
         )
         testProperty = entityManager.persistAndFlush(testProperty)

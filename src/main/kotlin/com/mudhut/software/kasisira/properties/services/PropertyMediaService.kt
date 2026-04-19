@@ -6,15 +6,15 @@ import com.mudhut.software.kasisira.properties.models.response.PropertyMediaResp
 
 interface PropertyMediaService {
 
-    fun addMedia(propertyId: Long, ownerId: Long, request: AddMediaRequest): PropertyMediaResponse
+    fun addMedia(propertyId: Long, callerUserId: Long, request: AddMediaRequest): PropertyMediaResponse
 
     fun getMediaByPropertyId(propertyId: Long): List<PropertyMediaResponse>
 
-    fun updateMedia(mediaId: Long, ownerId: Long, request: UpdateMediaRequest): PropertyMediaResponse
+    fun updateMedia(mediaId: Long, callerUserId: Long, request: UpdateMediaRequest): PropertyMediaResponse
 
-    fun deleteMedia(mediaId: Long, ownerId: Long)
+    fun deleteMedia(mediaId: Long, callerUserId: Long)
 
-    fun setAsPrimary(mediaId: Long, ownerId: Long): PropertyMediaResponse
+    fun setAsPrimary(mediaId: Long, callerUserId: Long): PropertyMediaResponse
 
-    fun reorderMedia(propertyId: Long, ownerId: Long, mediaIds: List<Long>)
+    fun reorderMedia(propertyId: Long, callerUserId: Long, mediaIds: List<Long>)
 }

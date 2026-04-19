@@ -1,7 +1,11 @@
 package com.mudhut.software.kasisira.properties.services
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
+import com.mudhut.software.kasisira.owner_org.entities.Permission
+import com.mudhut.software.kasisira.owner_org.services.MembershipService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.properties.aProperty
 import com.mudhut.software.kasisira.properties.entities.*
 import com.mudhut.software.kasisira.properties.mappers.PropertyMediaMapper
 import com.mudhut.software.kasisira.properties.models.request.AddMediaRequest
@@ -10,8 +14,8 @@ import com.mudhut.software.kasisira.properties.models.response.PropertyMediaResp
 import com.mudhut.software.kasisira.properties.repositories.PropertyMediaRepository
 import com.mudhut.software.kasisira.properties.repositories.PropertyRepository
 import com.mudhut.software.kasisira.utils.exceptions.MediaNotFoundException
+import com.mudhut.software.kasisira.utils.exceptions.PermissionDeniedException
 import com.mudhut.software.kasisira.utils.exceptions.PropertyNotFoundException
-import com.mudhut.software.kasisira.utils.exceptions.UnauthorizedAccessException
 import io.mockk.*
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
@@ -35,10 +39,14 @@ class PropertyMediaServiceImplTest {
     @MockK
     private lateinit var propertyMediaMapper: PropertyMediaMapper
 
+    @MockK
+    private lateinit var membershipService: MembershipService
+
     @InjectMockKs
     private lateinit var propertyMediaService: PropertyMediaServiceImpl
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
     private lateinit var testMedia: PropertyMedia
     private lateinit var testMediaResponse: PropertyMediaResponse
@@ -56,17 +64,16 @@ class PropertyMediaServiceImplTest {
             isEnabled = true
         )
 
-        testProperty = Property(
+        testOrg = OwnerOrg(
+            id = 10L,
+            creator = testUser,
+            name = "Test Org"
+        )
+
+        testProperty = aProperty(
             id = 1L,
-            owner = testUser,
-            title = "Beautiful House",
-            description = "A beautiful house for sale",
-            propertyType = PropertyType.HOUSE,
-            listingType = ListingType.FOR_SALE,
-            price = BigDecimal("500000000"),
-            currency = "UGX",
-            city = "Kampala",
-            status = PropertyStatus.DRAFT
+            ownerOrg = testOrg,
+            description = "A beautiful house for sale"
         )
 
         testMedia = PropertyMedia(
@@ -91,6 +98,9 @@ class PropertyMediaServiceImplTest {
             displayOrder = 0,
             createdAt = Instant.now()
         )
+
+        // Happy-path default: permission granted. Tests that need a denial stub override per test.
+        every { membershipService.requirePermission(any(), any(), any()) } just Runs
     }
 
     @Nested
@@ -124,6 +134,7 @@ class PropertyMediaServiceImplTest {
             // Then
             Assertions.assertNotNull(result)
             Assertions.assertEquals(testMediaResponse, result)
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify { propertyMediaRepository.save(any()) }
         }
 
@@ -157,12 +168,15 @@ class PropertyMediaServiceImplTest {
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyRepository.findById(1L) } returns Optional.of(testProperty)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyMediaService.addMedia(1L, 999L, addMediaRequest)
             }
         }
@@ -226,6 +240,7 @@ class PropertyMediaServiceImplTest {
 
             // Then
             Assertions.assertNotNull(result)
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify { propertyMediaRepository.save(any()) }
         }
 
@@ -241,12 +256,15 @@ class PropertyMediaServiceImplTest {
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyMediaRepository.findById(1L) } returns Optional.of(testMedia)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyMediaService.updateMedia(1L, 999L, updateMediaRequest)
             }
         }
@@ -266,6 +284,7 @@ class PropertyMediaServiceImplTest {
             propertyMediaService.deleteMedia(1L, 1L)
 
             // Then
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify { propertyMediaRepository.delete(testMedia) }
         }
 
@@ -281,12 +300,15 @@ class PropertyMediaServiceImplTest {
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyMediaRepository.findById(1L) } returns Optional.of(testMedia)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyMediaService.deleteMedia(1L, 999L)
             }
         }
@@ -310,6 +332,7 @@ class PropertyMediaServiceImplTest {
 
             // Then
             Assertions.assertNotNull(result)
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify { propertyMediaRepository.clearPrimaryFlagExcept(1L, 1L) }
         }
 
@@ -325,12 +348,15 @@ class PropertyMediaServiceImplTest {
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyMediaRepository.findById(1L) } returns Optional.of(testMedia)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyMediaService.setAsPrimary(1L, 999L)
             }
         }
@@ -353,6 +379,7 @@ class PropertyMediaServiceImplTest {
             propertyMediaService.reorderMedia(1L, 1L, listOf(2L, 1L))
 
             // Then
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify(exactly = 2) { propertyMediaRepository.save(any()) }
         }
 
@@ -368,12 +395,15 @@ class PropertyMediaServiceImplTest {
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyRepository.findById(1L) } returns Optional.of(testProperty)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyMediaService.reorderMedia(1L, 999L, listOf(1L, 2L))
             }
         }

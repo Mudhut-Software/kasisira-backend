@@ -1,7 +1,9 @@
 package com.mudhut.software.kasisira.properties.mappers
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.properties.aProperty
 import com.mudhut.software.kasisira.properties.entities.*
 import com.mudhut.software.kasisira.properties.models.request.AddMediaRequest
 import org.junit.jupiter.api.*
@@ -15,6 +17,7 @@ class PropertyMediaMapperTest {
     private lateinit var propertyMediaMapper: PropertyMediaMapper
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
     private lateinit var testMedia: PropertyMedia
 
@@ -33,16 +36,16 @@ class PropertyMediaMapperTest {
             isEnabled = true
         )
 
-        testProperty = Property(
+        testOrg = OwnerOrg(
+            id = 10L,
+            creator = testUser,
+            name = "Test Org"
+        )
+
+        testProperty = aProperty(
             id = 1L,
-            owner = testUser,
-            title = "Beautiful House",
+            ownerOrg = testOrg,
             description = "A beautiful house for sale",
-            propertyType = PropertyType.HOUSE,
-            listingType = ListingType.FOR_SALE,
-            price = BigDecimal("500000000"),
-            currency = "UGX",
-            city = "Kampala",
             status = PropertyStatus.ACTIVE
         )
 

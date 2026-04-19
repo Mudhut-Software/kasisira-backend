@@ -134,6 +134,7 @@ class EmailServiceImpl : EmailService {
         "verification" -> "Verify Your Email - $appName"
         "password-reset" -> "Reset Your Password - $appName"
         "welcome" -> "Welcome to $appName!"
+        "invite" -> "You're invited to join $appName"
         else -> appName
     }
 

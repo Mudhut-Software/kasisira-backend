@@ -1,6 +1,6 @@
 package com.mudhut.software.kasisira.properties.entities
 
-import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import jakarta.persistence.*
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -15,7 +15,7 @@ import java.time.Instant
 @Table(
     name = "properties",
     indexes = [
-        Index(name = "idx_property_owner", columnList = "owner_id"),
+        Index(name = "idx_property_owner_org", columnList = "owner_org_id"),
         Index(name = "idx_property_type", columnList = "property_type"),
         Index(name = "idx_property_listing_type", columnList = "listing_type"),
         Index(name = "idx_property_status", columnList = "status"),
@@ -29,9 +29,9 @@ data class Property(
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     val id: Long = 0,
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id", nullable = false)
-    var owner: User? = null,
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "owner_org_id", nullable = false)
+    val ownerOrg: OwnerOrg,
 
     @Column(nullable = false, length = 200)
     @field:NotBlank(message = "Title is required")
@@ -70,17 +70,17 @@ data class Property(
     @field:NotBlank(message = "City is required")
     val city: String,
 
-    @Column(length = 100)
-    val district: String? = null,
+    @Column(nullable = false, length = 100)
+    val district: String,
 
-    @Column(length = 255)
-    val address: String? = null,
+    @Column(nullable = false, length = 255)
+    val address: String,
 
-    @Column(precision = 10, scale = 7)
-    val latitude: BigDecimal? = null,
+    @Column(nullable = false, precision = 10, scale = 7)
+    val latitude: BigDecimal,
 
-    @Column(precision = 10, scale = 7)
-    val longitude: BigDecimal? = null,
+    @Column(nullable = false, precision = 10, scale = 7)
+    val longitude: BigDecimal,
 
     val bedrooms: Int? = null,
 

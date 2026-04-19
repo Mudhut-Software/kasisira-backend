@@ -17,7 +17,7 @@ import java.math.BigDecimal
 @Repository
 interface PropertyRepository : JpaRepository<Property, Long>, JpaSpecificationExecutor<Property> {
 
-    fun findByOwnerId(ownerId: Long, pageable: Pageable): Page<Property>
+    fun findByOwnerOrgId(ownerOrgId: Long, pageable: Pageable): Page<Property>
 
     fun findByStatus(status: PropertyStatus, pageable: Pageable): Page<Property>
 
@@ -61,7 +61,7 @@ interface PropertyRepository : JpaRepository<Property, Long>, JpaSpecificationEx
     @Query("UPDATE Property p SET p.viewCount = p.viewCount + 1 WHERE p.id = :id")
     fun incrementViewCount(@Param("id") id: Long)
 
-    fun countByOwnerId(ownerId: Long): Long
+    fun countByOwnerOrgId(ownerOrgId: Long): Long
 
-    fun countByOwnerIdAndStatus(ownerId: Long, status: PropertyStatus): Long
+    fun countByOwnerOrgIdAndStatus(ownerOrgId: Long, status: PropertyStatus): Long
 }

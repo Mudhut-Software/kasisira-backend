@@ -10,7 +10,7 @@ import java.time.Instant
 
 data class PropertyResponse(
     val id: Long,
-    val owner: PropertyOwnerResponse,
+    val org: PropertyOrgResponse,
     val title: String,
     val description: String,
     val propertyType: PropertyType,
@@ -20,10 +20,10 @@ data class PropertyResponse(
     val price: BigDecimal,
     val currency: String,
     val city: String,
-    val district: String?,
-    val address: String?,
-    val latitude: BigDecimal?,
-    val longitude: BigDecimal?,
+    val district: String,
+    val address: String,
+    val latitude: BigDecimal,
+    val longitude: BigDecimal,
     val bedrooms: Int?,
     val bathrooms: Int?,
     val landSize: BigDecimal?,

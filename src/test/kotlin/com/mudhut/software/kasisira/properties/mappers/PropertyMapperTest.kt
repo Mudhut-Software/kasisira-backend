@@ -1,7 +1,9 @@
 package com.mudhut.software.kasisira.properties.mappers
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.properties.aProperty
 import com.mudhut.software.kasisira.properties.entities.*
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
 import com.mudhut.software.kasisira.properties.models.request.UpdatePropertyRequest
@@ -20,6 +22,7 @@ class PropertyMapperTest {
     private lateinit var propertyMapper: PropertyMapper
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
     private lateinit var testMedia: PropertyMedia
     private lateinit var testMediaResponse: PropertyMediaResponse
@@ -39,6 +42,15 @@ class PropertyMapperTest {
             emailVerified = true,
             isActive = true,
             isEnabled = true,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
+        )
+
+        testOrg = OwnerOrg(
+            id = 10L,
+            creator = testUser,
+            name = "Test Org",
+            verifiedAt = null,
             createdAt = Instant.now(),
             updatedAt = Instant.now()
         )
@@ -65,26 +77,13 @@ class PropertyMapperTest {
             createdAt = Instant.now()
         )
 
-        testProperty = Property(
+        testProperty = aProperty(
             id = 1L,
-            owner = testUser,
-            title = "Beautiful House",
+            ownerOrg = testOrg,
             description = "A beautiful house for sale",
-            propertyType = PropertyType.HOUSE,
-            listingType = ListingType.FOR_SALE,
-            rentalDuration = null,
-            furnishingStatus = null,
-            price = BigDecimal("500000000"),
-            currency = "UGX",
-            city = "Kampala",
-            district = "Wakiso",
-            address = "123 Main Street",
-            latitude = BigDecimal("0.3476"),
-            longitude = BigDecimal("32.5825"),
             bedrooms = 3,
             bathrooms = 2,
             landSize = BigDecimal("500"),
-            landSizeUnit = "sqm",
             builtArea = BigDecimal("200"),
             yearBuilt = 2020,
             features = "parking,garden,security",
@@ -126,7 +125,7 @@ class PropertyMapperTest {
         }
 
         @Test
-        fun `should map owner correctly`() {
+        fun `should map org correctly`() {
             // Given
             every { propertyMediaMapper.toResponse(testMedia) } returns testMediaResponse
 
@@ -134,9 +133,23 @@ class PropertyMapperTest {
             val response = propertyMapper.toResponse(testProperty)
 
             // Then
-            assertEquals(testUser.id, response.owner.id)
-            assertEquals(testUser.username, response.owner.username)
-            assertEquals(testUser.imageUrl, response.owner.imageUrl)
+            assertEquals(testOrg.id, response.org.id)
+            assertEquals(testOrg.name, response.org.name)
+            assertEquals(false, response.org.isVerified)
+        }
+
+        @Test
+        fun `should map org as verified when verifiedAt is set`() {
+            // Given
+            val verifiedOrg = testOrg.copy(verifiedAt = Instant.now())
+            val propertyWithVerifiedOrg = testProperty.copy(ownerOrg = verifiedOrg)
+            every { propertyMediaMapper.toResponse(testMedia) } returns testMediaResponse
+
+            // When
+            val response = propertyMapper.toResponse(propertyWithVerifiedOrg)
+
+            // Then
+            assertEquals(true, response.org.isVerified)
         }
 
         @Test
@@ -254,17 +267,20 @@ class PropertyMapperTest {
                 price = BigDecimal("600000000"),
                 city = "Kampala",
                 district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 bedrooms = 4,
                 bathrooms = 3,
                 features = listOf("parking", "pool")
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             assertEquals(0, property.id) // New entity
-            assertEquals(testUser, property.owner)
+            assertEquals(testOrg, property.ownerOrg)
             assertEquals(request.title, property.title)
             assertEquals(request.description, property.description)
             assertEquals(request.propertyType, property.propertyType)
@@ -287,11 +303,15 @@ class PropertyMapperTest {
                 listingType = ListingType.FOR_SALE,
                 price = BigDecimal("600000000"),
                 city = "Kampala",
+                district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 features = listOf("parking", "pool", "garden")
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             assertEquals("parking,pool,garden", property.features)
@@ -307,11 +327,15 @@ class PropertyMapperTest {
                 listingType = ListingType.FOR_SALE,
                 price = BigDecimal("600000000"),
                 city = "Kampala",
+                district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 features = null
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             Assertions.assertNull(property.features)
@@ -328,11 +352,15 @@ class PropertyMapperTest {
                 rentalDuration = RentalDuration.MONTHLY,
                 furnishingStatus = FurnishingStatus.FURNISHED,
                 price = BigDecimal("2000000"),
-                city = "Kampala"
+                city = "Kampala",
+                district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825")
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             assertEquals(ListingType.FOR_RENT, property.listingType)
