@@ -59,6 +59,10 @@ class PropertyMediaRepositoryTest {
             price = BigDecimal("500000000"),
             currency = "UGX",
             city = "Kampala",
+            district = "Wakiso",
+            address = "123 Main Street",
+            latitude = BigDecimal("0.3476"),
+            longitude = BigDecimal("32.5825"),
             status = PropertyStatus.ACTIVE
         )
         testProperty = entityManager.persistAndFlush(testProperty)

@@ -85,6 +85,9 @@ class PropertyServiceImplTest {
             currency = "UGX",
             city = "Kampala",
             district = "Wakiso",
+            address = "123 Main Street",
+            latitude = BigDecimal("0.3476"),
+            longitude = BigDecimal("32.5825"),
             status = PropertyStatus.DRAFT,
             createdAt = Instant.now(),
             updatedAt = Instant.now()

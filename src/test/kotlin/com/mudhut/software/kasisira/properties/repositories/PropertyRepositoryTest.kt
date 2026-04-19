@@ -60,6 +60,9 @@ class PropertyRepositoryTest {
             currency = "UGX",
             city = "Kampala",
             district = "Wakiso",
+            address = "123 Main Street",
+            latitude = BigDecimal("0.3476"),
+            longitude = BigDecimal("32.5825"),
             bedrooms = 3,
             bathrooms = 2,
             status = PropertyStatus.ACTIVE
@@ -301,6 +304,10 @@ class PropertyRepositoryTest {
                 price = BigDecimal("400000000"),
                 currency = "UGX",
                 city = "Kampala",
+                district = "Wakiso",
+                address = "123 Main Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 status = PropertyStatus.DRAFT
             )
             entityManager.persistAndFlush(anotherProperty)
@@ -340,6 +347,10 @@ class PropertyRepositoryTest {
                 price = BigDecimal("400000000"),
                 currency = "UGX",
                 city = "Kampala",
+                district = "Wakiso",
+                address = "123 Main Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 status = PropertyStatus.DRAFT
             )
             entityManager.persistAndFlush(draftProperty)

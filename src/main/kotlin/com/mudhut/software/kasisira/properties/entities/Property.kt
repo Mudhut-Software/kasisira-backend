@@ -70,17 +70,17 @@ data class Property(
     @field:NotBlank(message = "City is required")
     val city: String,
 
-    @Column(length = 100)
-    val district: String? = null,
+    @Column(nullable = false, length = 100)
+    val district: String,
 
-    @Column(length = 255)
-    val address: String? = null,
+    @Column(nullable = false, length = 255)
+    val address: String,
 
-    @Column(precision = 10, scale = 7)
-    val latitude: BigDecimal? = null,
+    @Column(nullable = false, precision = 10, scale = 7)
+    val latitude: BigDecimal,
 
-    @Column(precision = 10, scale = 7)
-    val longitude: BigDecimal? = null,
+    @Column(nullable = false, precision = 10, scale = 7)
+    val longitude: BigDecimal,
 
     val bedrooms: Int? = null,
 
