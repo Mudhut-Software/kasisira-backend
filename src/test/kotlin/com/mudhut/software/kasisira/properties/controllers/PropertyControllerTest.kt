@@ -9,6 +9,7 @@ import com.mudhut.software.kasisira.properties.entities.ListingType
 import com.mudhut.software.kasisira.properties.entities.PropertyStatus
 import com.mudhut.software.kasisira.properties.entities.PropertyType
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
+import com.mudhut.software.kasisira.properties.models.request.UpdatePropertyRequest
 import com.mudhut.software.kasisira.properties.models.response.PropertyOrgResponse
 import com.mudhut.software.kasisira.properties.models.response.PropertyResponse
 import com.mudhut.software.kasisira.properties.services.PropertyService
@@ -27,6 +28,7 @@ import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequ
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.post
+import org.springframework.test.web.servlet.put
 import java.math.BigDecimal
 
 @SpringBootTest
@@ -226,5 +228,64 @@ class PropertyControllerTest {
         }
 
         assertEquals(PropertyType.STUDIO, captured.captured.propertyType)
+    }
+
+    // --- Update-path validation: validators fire only when the field is present ---
+
+    @Test
+    fun `PUT properties with only price returns 200 (partial update)`() {
+        val captured = slot<UpdatePropertyRequest>()
+        every { propertyService.updateProperty(1L, 1L, capture(captured)) } returns mockCreatedResponse()
+
+        mockMvc.put("/v1/properties/1") {
+            with(authed())
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf("price" to 600000000))
+        }.andExpect {
+            status { isOk() }
+        }
+
+        assertEquals(BigDecimal("600000000"), captured.captured.price)
+        assertEquals(null, captured.captured.district)
+        assertEquals(null, captured.captured.latitude)
+    }
+
+    @Test
+    fun `PUT properties with blank district returns 400 VALIDATION_ERROR`() {
+        mockMvc.put("/v1/properties/1") {
+            with(authed())
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf("district" to ""))
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.errorCode") { value("VALIDATION_ERROR") }
+            jsonPath("$.errors.district") { exists() }
+        }
+    }
+
+    @Test
+    fun `PUT properties with out-of-range latitude returns 400 VALIDATION_ERROR`() {
+        mockMvc.put("/v1/properties/1") {
+            with(authed())
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf("latitude" to 91))
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.errorCode") { value("VALIDATION_ERROR") }
+            jsonPath("$.errors.latitude") { exists() }
+        }
+    }
+
+    @Test
+    fun `PUT properties with out-of-range longitude returns 400 VALIDATION_ERROR`() {
+        mockMvc.put("/v1/properties/1") {
+            with(authed())
+            contentType = MediaType.APPLICATION_JSON
+            content = objectMapper.writeValueAsString(mapOf("longitude" to -181))
+        }.andExpect {
+            status { isBadRequest() }
+            jsonPath("$.errorCode") { value("VALIDATION_ERROR") }
+            jsonPath("$.errors.longitude") { exists() }
+        }
     }
 }
