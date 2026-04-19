@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintViolationException
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
 import org.springframework.security.authentication.BadCredentialsException
@@ -234,9 +235,24 @@ class GlobalExceptionHandler {
             .body(ErrorResponse(ErrorCodes.MAIL, "Failed to send email"))
     }
 
-    // Request body exception handler
+    // Request body exception handler. When Jackson fails because a required
+    // non-nullable Kotlin field is missing from the JSON, translate that into
+    // the same VALIDATION_ERROR shape Bean Validation emits so clients see
+    // one consistent error contract regardless of which layer caught it.
     @ExceptionHandler(HttpMessageNotReadableException::class)
     fun handleRequestBodyException(ex: HttpMessageNotReadableException): ResponseEntity<ErrorResponse> {
+        val cause = ex.mostSpecificCause
+        if (cause is MismatchedInputException) {
+            val field = cause.path
+                .mapNotNull { it.fieldName }
+                .joinToString(".")
+            if (field.isNotBlank()) {
+                log.debug("Missing or invalid required field '{}'", field)
+                return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .body(ErrorResponse(ErrorCodes.VALIDATION, mapOf(field to "$field is required")))
+            }
+        }
         log.debug("Request body error: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)

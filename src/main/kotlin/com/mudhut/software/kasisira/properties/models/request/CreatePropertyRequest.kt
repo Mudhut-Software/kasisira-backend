@@ -42,20 +42,18 @@ data class CreatePropertyRequest(
     val city: String,
 
     @field:NotBlank(message = "District is required")
-    val district: String?,
+    val district: String,
 
     @field:NotBlank(message = "Address is required")
-    val address: String?,
+    val address: String,
 
-    @field:NotNull(message = "Latitude is required")
     @field:DecimalMin(value = "-90.0", message = "Latitude must be between -90 and 90")
     @field:DecimalMax(value = "90.0", message = "Latitude must be between -90 and 90")
-    val latitude: BigDecimal?,
+    val latitude: BigDecimal,
 
-    @field:NotNull(message = "Longitude is required")
     @field:DecimalMin(value = "-180.0", message = "Longitude must be between -180 and 180")
     @field:DecimalMax(value = "180.0", message = "Longitude must be between -180 and 180")
-    val longitude: BigDecimal?,
+    val longitude: BigDecimal,
 
     @field:Min(value = 0, message = "Bedrooms cannot be negative")
     val bedrooms: Int? = null,
