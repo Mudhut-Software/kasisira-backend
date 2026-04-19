@@ -1,6 +1,7 @@
 package com.mudhut.software.kasisira.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.mudhut.software.kasisira.utils.exceptions.ErrorCodes
 import com.mudhut.software.kasisira.utils.exceptions.ErrorResponse
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
@@ -27,7 +28,7 @@ class RestAccessDeniedHandler(
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = "UTF-8"
         val body = ErrorResponse(
-            errorCode = "AUTHORIZATION_ERROR",
+            errorCode = ErrorCodes.AUTHORIZATION,
             message = "You don't have permission to access this resource"
         )
         response.writer.write(objectMapper.writeValueAsString(body))

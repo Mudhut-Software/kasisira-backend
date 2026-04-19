@@ -22,20 +22,6 @@ class GlobalExceptionHandler {
 
     companion object {
         private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
-
-        // Standardized error codes
-        private const val ERROR_CODE_VALIDATION = "VALIDATION_ERROR"
-        private const val ERROR_CODE_AUTHENTICATION = "AUTHENTICATION_ERROR"
-        private const val ERROR_CODE_AUTHORIZATION = "AUTHORIZATION_ERROR"
-        private const val ERROR_CODE_NOT_FOUND = "NOT_FOUND_ERROR"
-        private const val ERROR_CODE_MAIL = "MAIL_ERROR"
-        private const val ERROR_CODE_INTERNAL = "INTERNAL_ERROR"
-        private const val ERROR_CODE_USER = "USER_ERROR"
-        private const val ERROR_CODE_REQUEST = "REQUEST_ERROR"
-        private const val ERROR_CODE_CONFLICT = "CONFLICT_ERROR"
-        private const val ERROR_CODE_TOKEN = "TOKEN_ERROR"
-        private const val ERROR_CODE_RATE_LIMITED = "RATE_LIMITED"
-        private const val ERROR_CODE_OTP = "OTP_ERROR"
     }
 
     // User-related exception handlers
@@ -44,7 +30,7 @@ class GlobalExceptionHandler {
         log.warn("User already exists: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.CONFLICT)
-            .body(ErrorResponse(ERROR_CODE_CONFLICT, ex.message ?: "User already exists"))
+            .body(ErrorResponse(ErrorCodes.CONFLICT, ex.message ?: "User already exists"))
     }
 
     @ExceptionHandler(UserNotFoundException::class)
@@ -52,7 +38,7 @@ class GlobalExceptionHandler {
         log.warn("User not found: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "User not found"))
+            .body(ErrorResponse(ErrorCodes.NOT_FOUND, ex.message ?: "User not found"))
     }
 
     @ExceptionHandler(UserNotActiveException::class)
@@ -60,7 +46,7 @@ class GlobalExceptionHandler {
         log.warn("User not active: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.FORBIDDEN)
-            .body(ErrorResponse(ERROR_CODE_USER, ex.message ?: "User account is not active"))
+            .body(ErrorResponse(ErrorCodes.USER, ex.message ?: "User account is not active"))
     }
 
     @ExceptionHandler(EmailNotVerifiedException::class)
@@ -68,7 +54,7 @@ class GlobalExceptionHandler {
         log.warn("Email not verified: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.FORBIDDEN)
-            .body(ErrorResponse(ERROR_CODE_USER, ex.message ?: "Email address is not verified"))
+            .body(ErrorResponse(ErrorCodes.USER, ex.message ?: "Email address is not verified"))
     }
 
     // Token-related exception handlers
@@ -77,7 +63,7 @@ class GlobalExceptionHandler {
         log.warn("Invalid token: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_TOKEN, ex.message ?: "Invalid token"))
+            .body(ErrorResponse(ErrorCodes.TOKEN, ex.message ?: "Invalid token"))
     }
 
     @ExceptionHandler(TokenExpiredException::class)
@@ -85,7 +71,7 @@ class GlobalExceptionHandler {
         log.warn("Token expired: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_TOKEN, ex.message ?: "Token has expired"))
+            .body(ErrorResponse(ErrorCodes.TOKEN, ex.message ?: "Token has expired"))
     }
 
     @ExceptionHandler(TokenAlreadyUsedException::class)
@@ -93,7 +79,7 @@ class GlobalExceptionHandler {
         log.warn("Token already used: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_TOKEN, ex.message ?: "Token has already been used"))
+            .body(ErrorResponse(ErrorCodes.TOKEN, ex.message ?: "Token has already been used"))
     }
 
     // Resource not found exceptions
@@ -102,7 +88,7 @@ class GlobalExceptionHandler {
         log.warn("Resource not found: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "Resource not found"))
+            .body(ErrorResponse(ErrorCodes.NOT_FOUND, ex.message ?: "Resource not found"))
     }
 
     @ExceptionHandler(ContactNotFoundException::class)
@@ -110,7 +96,7 @@ class GlobalExceptionHandler {
         log.warn("Contact not found: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "Contact not found"))
+            .body(ErrorResponse(ErrorCodes.NOT_FOUND, ex.message ?: "Contact not found"))
     }
 
     @ExceptionHandler(NoSuchElementException::class)
@@ -118,7 +104,7 @@ class GlobalExceptionHandler {
         log.warn("Element not found: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "Resource not found"))
+            .body(ErrorResponse(ErrorCodes.NOT_FOUND, ex.message ?: "Resource not found"))
     }
 
     // Validation exception handlers
@@ -133,7 +119,7 @@ class GlobalExceptionHandler {
         }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_VALIDATION, errors))
+            .body(ErrorResponse(ErrorCodes.VALIDATION, errors))
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -147,7 +133,7 @@ class GlobalExceptionHandler {
         }
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_VALIDATION, errors))
+            .body(ErrorResponse(ErrorCodes.VALIDATION, errors))
     }
 
     @ExceptionHandler(IllegalArgumentException::class)
@@ -155,7 +141,7 @@ class GlobalExceptionHandler {
         log.warn("Illegal argument: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_VALIDATION, ex.message ?: "Invalid argument"))
+            .body(ErrorResponse(ErrorCodes.VALIDATION, ex.message ?: "Invalid argument"))
     }
 
     @ExceptionHandler(InvalidEmailFormatException::class)
@@ -163,7 +149,7 @@ class GlobalExceptionHandler {
         log.warn("Invalid email format: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_VALIDATION, ex.message ?: "Invalid email format"))
+            .body(ErrorResponse(ErrorCodes.VALIDATION, ex.message ?: "Invalid email format"))
     }
 
     @ExceptionHandler(InvalidPhoneNumberException::class)
@@ -171,7 +157,7 @@ class GlobalExceptionHandler {
         log.warn("Invalid phone number: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_VALIDATION, ex.message ?: "Invalid phone number format"))
+            .body(ErrorResponse(ErrorCodes.VALIDATION, ex.message ?: "Invalid phone number format"))
     }
 
     @ExceptionHandler(WeakPasswordException::class)
@@ -179,7 +165,7 @@ class GlobalExceptionHandler {
         log.warn("Weak password: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_VALIDATION, ex.message ?: "Password does not meet security requirements"))
+            .body(ErrorResponse(ErrorCodes.VALIDATION, ex.message ?: "Password does not meet security requirements"))
     }
 
     // Security-related exception handlers
@@ -188,7 +174,7 @@ class GlobalExceptionHandler {
         log.warn("Authentication failed: Bad credentials")
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
-            .body(ErrorResponse(ERROR_CODE_AUTHENTICATION, "Invalid username or password"))
+            .body(ErrorResponse(ErrorCodes.AUTHENTICATION, "Invalid username or password"))
     }
 
     @ExceptionHandler(DisabledException::class)
@@ -196,7 +182,7 @@ class GlobalExceptionHandler {
         log.warn("Authentication failed: Account disabled")
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
-            .body(ErrorResponse(ERROR_CODE_AUTHENTICATION, "Account is disabled"))
+            .body(ErrorResponse(ErrorCodes.AUTHENTICATION, "Account is disabled"))
     }
 
     @ExceptionHandler(LockedException::class)
@@ -204,7 +190,7 @@ class GlobalExceptionHandler {
         log.warn("Authentication failed: Account locked")
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
-            .body(ErrorResponse(ERROR_CODE_AUTHENTICATION, "Account is locked"))
+            .body(ErrorResponse(ErrorCodes.AUTHENTICATION, "Account is locked"))
     }
 
     @ExceptionHandler(AccessDeniedException::class)
@@ -212,7 +198,7 @@ class GlobalExceptionHandler {
         log.warn("Authorization failed: Access denied")
         return ResponseEntity
             .status(HttpStatus.FORBIDDEN)
-            .body(ErrorResponse(ERROR_CODE_AUTHORIZATION, "You don't have permission to access this resource"))
+            .body(ErrorResponse(ErrorCodes.AUTHORIZATION, "You don't have permission to access this resource"))
     }
 
     @ExceptionHandler(AuthenticationException::class)
@@ -220,7 +206,7 @@ class GlobalExceptionHandler {
         log.warn("Authentication failed: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.UNAUTHORIZED)
-            .body(ErrorResponse(ERROR_CODE_AUTHENTICATION, "Authentication failed"))
+            .body(ErrorResponse(ErrorCodes.AUTHENTICATION, "Authentication failed"))
     }
 
     // Mail-related exception handlers with sanitized messages
@@ -229,7 +215,7 @@ class GlobalExceptionHandler {
         log.error("Mail authentication error: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ErrorResponse(ERROR_CODE_MAIL, "Failed to authenticate with mail server"))
+            .body(ErrorResponse(ErrorCodes.MAIL, "Failed to authenticate with mail server"))
     }
 
     @ExceptionHandler(MailerSendException::class)
@@ -237,7 +223,7 @@ class GlobalExceptionHandler {
         log.error("MailerSend error: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ErrorResponse(ERROR_CODE_MAIL, "Failed to send email"))
+            .body(ErrorResponse(ErrorCodes.MAIL, "Failed to send email"))
     }
 
     @ExceptionHandler(MailSendingException::class)
@@ -245,7 +231,7 @@ class GlobalExceptionHandler {
         log.error("Mail sending error: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ErrorResponse(ERROR_CODE_MAIL, "Failed to send email"))
+            .body(ErrorResponse(ErrorCodes.MAIL, "Failed to send email"))
     }
 
     // Request body exception handler
@@ -254,7 +240,7 @@ class GlobalExceptionHandler {
         log.debug("Request body error: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_REQUEST, "Required request body is missing or malformed"))
+            .body(ErrorResponse(ErrorCodes.REQUEST, "Required request body is missing or malformed"))
     }
 
     // Property-related exception handlers
@@ -263,7 +249,7 @@ class GlobalExceptionHandler {
         log.warn("Property not found: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "Property not found"))
+            .body(ErrorResponse(ErrorCodes.NOT_FOUND, ex.message ?: "Property not found"))
     }
 
     @ExceptionHandler(MediaNotFoundException::class)
@@ -271,7 +257,7 @@ class GlobalExceptionHandler {
         log.warn("Media not found: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.NOT_FOUND)
-            .body(ErrorResponse(ERROR_CODE_NOT_FOUND, ex.message ?: "Media not found"))
+            .body(ErrorResponse(ErrorCodes.NOT_FOUND, ex.message ?: "Media not found"))
     }
 
     @ExceptionHandler(InvalidPropertyConfigurationException::class)
@@ -279,7 +265,7 @@ class GlobalExceptionHandler {
         log.warn("Invalid property configuration: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_VALIDATION, ex.message ?: "Invalid property configuration"))
+            .body(ErrorResponse(ErrorCodes.VALIDATION, ex.message ?: "Invalid property configuration"))
     }
 
     @ExceptionHandler(UnauthorizedAccessException::class)
@@ -287,7 +273,7 @@ class GlobalExceptionHandler {
         log.warn("Unauthorized access: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.FORBIDDEN)
-            .body(ErrorResponse(ERROR_CODE_AUTHORIZATION, ex.message ?: "Unauthorized access"))
+            .body(ErrorResponse(ErrorCodes.AUTHORIZATION, ex.message ?: "Unauthorized access"))
     }
 
     // OTP / rate-limit exception handlers
@@ -296,7 +282,7 @@ class GlobalExceptionHandler {
         log.warn("Rate limited: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.TOO_MANY_REQUESTS)
-            .body(ErrorResponse(ERROR_CODE_RATE_LIMITED, ex.message ?: "Too many requests"))
+            .body(ErrorResponse(ErrorCodes.RATE_LIMITED, ex.message ?: "Too many requests"))
     }
 
     @ExceptionHandler(InvalidOtpException::class)
@@ -304,7 +290,7 @@ class GlobalExceptionHandler {
         log.debug("Invalid OTP: {}", ex.message)
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
-            .body(ErrorResponse(ERROR_CODE_OTP, ex.message ?: "Invalid OTP"))
+            .body(ErrorResponse(ErrorCodes.OTP, ex.message ?: "Invalid OTP"))
     }
 
     // Org / membership / invite exception handlers
@@ -339,6 +325,6 @@ class GlobalExceptionHandler {
         log.error("Unhandled exception occurred", ex)
         return ResponseEntity
             .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ErrorResponse(ERROR_CODE_INTERNAL, "An unexpected error occurred"))
+            .body(ErrorResponse(ErrorCodes.INTERNAL, "An unexpected error occurred"))
     }
 }
