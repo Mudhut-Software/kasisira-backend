@@ -24,7 +24,8 @@ class RestAuthenticationEntryPointTest {
         entryPoint.commence(request, response, exception)
 
         assertEquals(401, response.status)
-        assertEquals(MediaType.APPLICATION_JSON_VALUE, response.contentType)
+        assertEquals(MediaType.APPLICATION_JSON_VALUE, response.contentType?.substringBefore(";")?.trim())
+        assertEquals("UTF-8", response.characterEncoding)
 
         val body = objectMapper.readValue(response.contentAsString, ErrorResponse::class.java)
         assertEquals("AUTHENTICATION_ERROR", body.errorCode)

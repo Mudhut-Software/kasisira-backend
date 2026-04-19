@@ -21,6 +21,7 @@ class RestAuthenticationEntryPoint(
     ) {
         response.status = HttpServletResponse.SC_UNAUTHORIZED
         response.contentType = MediaType.APPLICATION_JSON_VALUE
+        response.characterEncoding = "UTF-8"
         val body = ErrorResponse(
             errorCode = "AUTHENTICATION_ERROR",
             message = "Authentication is required to access this resource"
