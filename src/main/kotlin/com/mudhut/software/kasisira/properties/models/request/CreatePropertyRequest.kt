@@ -4,6 +4,8 @@ import com.mudhut.software.kasisira.properties.entities.FurnishingStatus
 import com.mudhut.software.kasisira.properties.entities.ListingType
 import com.mudhut.software.kasisira.properties.entities.PropertyType
 import com.mudhut.software.kasisira.properties.entities.RentalDuration
+import jakarta.validation.constraints.DecimalMax
+import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
@@ -28,7 +30,7 @@ data class CreatePropertyRequest(
 
     val rentalDuration: RentalDuration? = null,
 
-    val furnishingStatus: FurnishingStatus? = null,
+    val furnishingStatus: FurnishingStatus = FurnishingStatus.UNFURNISHED,
 
     @field:NotNull(message = "Price is required")
     @field:Positive(message = "Price must be positive")
@@ -39,13 +41,21 @@ data class CreatePropertyRequest(
     @field:NotBlank(message = "City is required")
     val city: String,
 
-    val district: String? = null,
+    @field:NotBlank(message = "District is required")
+    val district: String?,
 
-    val address: String? = null,
+    @field:NotBlank(message = "Address is required")
+    val address: String?,
 
-    val latitude: BigDecimal? = null,
+    @field:NotNull(message = "Latitude is required")
+    @field:DecimalMin(value = "-90.0", message = "Latitude must be between -90 and 90")
+    @field:DecimalMax(value = "90.0", message = "Latitude must be between -90 and 90")
+    val latitude: BigDecimal?,
 
-    val longitude: BigDecimal? = null,
+    @field:NotNull(message = "Longitude is required")
+    @field:DecimalMin(value = "-180.0", message = "Longitude must be between -180 and 180")
+    @field:DecimalMax(value = "180.0", message = "Longitude must be between -180 and 180")
+    val longitude: BigDecimal?,
 
     @field:Min(value = 0, message = "Bedrooms cannot be negative")
     val bedrooms: Int? = null,

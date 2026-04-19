@@ -3,6 +3,7 @@ package com.mudhut.software.kasisira.properties.services
 import com.mudhut.software.kasisira.owner_org.entities.Permission
 import com.mudhut.software.kasisira.owner_org.services.MembershipService
 import com.mudhut.software.kasisira.owner_org.services.OwnerOrgService
+import com.mudhut.software.kasisira.properties.entities.FurnishingStatus
 import com.mudhut.software.kasisira.properties.entities.ListingType
 import com.mudhut.software.kasisira.properties.entities.PropertyStatus
 import com.mudhut.software.kasisira.properties.entities.PropertyType
@@ -145,7 +146,7 @@ class PropertyServiceImpl : PropertyService {
             throw InvalidPropertyConfigurationException("Rental duration is required for rental listings")
         }
 
-        if (request.listingType == ListingType.FOR_SALE && request.furnishingStatus != null) {
+        if (request.listingType == ListingType.FOR_SALE && request.furnishingStatus != FurnishingStatus.UNFURNISHED) {
             throw InvalidPropertyConfigurationException("Furnishing status is only applicable for rental listings")
         }
     }

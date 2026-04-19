@@ -279,6 +279,9 @@ class PropertyMapperTest {
                 price = BigDecimal("600000000"),
                 city = "Kampala",
                 district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 bedrooms = 4,
                 bathrooms = 3,
                 features = listOf("parking", "pool")
@@ -312,6 +315,10 @@ class PropertyMapperTest {
                 listingType = ListingType.FOR_SALE,
                 price = BigDecimal("600000000"),
                 city = "Kampala",
+                district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 features = listOf("parking", "pool", "garden")
             )
 
@@ -332,6 +339,10 @@ class PropertyMapperTest {
                 listingType = ListingType.FOR_SALE,
                 price = BigDecimal("600000000"),
                 city = "Kampala",
+                district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825"),
                 features = null
             )
 
@@ -353,7 +364,11 @@ class PropertyMapperTest {
                 rentalDuration = RentalDuration.MONTHLY,
                 furnishingStatus = FurnishingStatus.FURNISHED,
                 price = BigDecimal("2000000"),
-                city = "Kampala"
+                city = "Kampala",
+                district = "Nakawa",
+                address = "1 Test Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825")
             )
 
             // When

@@ -159,7 +159,11 @@ class PropertyServiceImplTest {
                 propertyType = PropertyType.HOUSE,
                 listingType = ListingType.FOR_SALE,
                 price = BigDecimal("500000000"),
-                city = "Kampala"
+                city = "Kampala",
+                district = "Wakiso",
+                address = "123 Main Street",
+                latitude = BigDecimal("0.3476"),
+                longitude = BigDecimal("32.5825")
             )
         }
 
