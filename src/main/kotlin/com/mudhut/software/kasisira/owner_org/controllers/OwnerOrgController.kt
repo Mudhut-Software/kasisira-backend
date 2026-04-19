@@ -18,7 +18,7 @@ class OwnerOrgController(
     private val membershipService: MembershipService,
     private val mapper: OwnerOrgMapper
 ) {
-    @PostMapping
+    @PostMapping("/create")
     fun create(
         @AuthenticationPrincipal principal: UserPrincipal,
         @Valid @RequestBody body: CreateOrgRequest

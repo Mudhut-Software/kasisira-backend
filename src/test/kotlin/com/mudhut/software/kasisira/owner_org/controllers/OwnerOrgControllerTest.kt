@@ -39,7 +39,7 @@ class OwnerOrgControllerTest {
 
         every { ownerOrgService.createOrg(1L, "My Org") } returns org
 
-        mockMvc.post("/v1/orgs") {
+        mockMvc.post("/v1/orgs/create") {
             with(authentication(UsernamePasswordAuthenticationToken(principal, null, principal.authorities)))
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(CreateOrgRequest("My Org"))
