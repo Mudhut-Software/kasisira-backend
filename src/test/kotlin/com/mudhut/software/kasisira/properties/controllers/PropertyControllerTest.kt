@@ -2,7 +2,6 @@ package com.mudhut.software.kasisira.properties.controllers
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
-import com.mudhut.software.kasisira.owner_org.services.MembershipService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.properties.entities.FurnishingStatus
@@ -39,11 +38,15 @@ class PropertyControllerTest {
     @Autowired private lateinit var objectMapper: ObjectMapper
 
     @MockkBean private lateinit var propertyService: PropertyService
-    @MockkBean private lateinit var membershipService: MembershipService
 
     private val user = User(id = 1L, username = "u", email = "u@x.com", provider = AuthProvider.LOCAL)
-    private val principal: UserPrincipal = UserPrincipal.create(user, setOf("TENANT", "OWNER"))
+    private val authPrincipal = UserPrincipal.create(user, setOf("TENANT", "OWNER"))
 
+    private fun authed() = authentication(
+        UsernamePasswordAuthenticationToken(authPrincipal, null, authPrincipal.authorities)
+    )
+
+    /** Builds a valid JSON body for the create-property request. A `null` value in [overrides] removes the key from the body (simulating an absent JSON field). */
     private fun validBody(
         overrides: Map<String, Any?> = emptyMap()
     ): Map<String, Any?> {
@@ -102,7 +105,7 @@ class PropertyControllerTest {
         every { propertyService.createProperty(1L, 10L, capture(captured)) } returns mockCreatedResponse()
 
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody())
         }.andExpect {
@@ -118,7 +121,7 @@ class PropertyControllerTest {
     @Test
     fun `POST properties omitting address returns 400 VALIDATION_ERROR`() {
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody(mapOf("address" to null)))
         }.andExpect {
@@ -131,7 +134,7 @@ class PropertyControllerTest {
     @Test
     fun `POST properties omitting district returns 400 VALIDATION_ERROR`() {
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody(mapOf("district" to null)))
         }.andExpect {
@@ -144,7 +147,7 @@ class PropertyControllerTest {
     @Test
     fun `POST properties omitting latitude returns 400 VALIDATION_ERROR`() {
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody(mapOf("latitude" to null)))
         }.andExpect {
@@ -157,7 +160,7 @@ class PropertyControllerTest {
     @Test
     fun `POST properties omitting longitude returns 400 VALIDATION_ERROR`() {
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody(mapOf("longitude" to null)))
         }.andExpect {
@@ -170,7 +173,7 @@ class PropertyControllerTest {
     @Test
     fun `POST properties with out-of-range latitude returns 400 VALIDATION_ERROR`() {
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody(mapOf("latitude" to 91)))
         }.andExpect {
@@ -183,7 +186,7 @@ class PropertyControllerTest {
     @Test
     fun `POST properties with out-of-range longitude returns 400 VALIDATION_ERROR`() {
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody(mapOf("longitude" to -181)))
         }.andExpect {
@@ -199,7 +202,7 @@ class PropertyControllerTest {
         every { propertyService.createProperty(1L, 10L, capture(captured)) } returns mockCreatedResponse()
 
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody())
         }.andExpect {
@@ -215,7 +218,7 @@ class PropertyControllerTest {
         every { propertyService.createProperty(1L, 10L, capture(captured)) } returns mockCreatedResponse()
 
         mockMvc.post("/v1/orgs/10/properties") {
-            with(authentication(UsernamePasswordAuthenticationToken(this@PropertyControllerTest.principal, null, this@PropertyControllerTest.principal.authorities)))
+            with(authed())
             contentType = MediaType.APPLICATION_JSON
             content = objectMapper.writeValueAsString(validBody(mapOf("propertyType" to "STUDIO")))
         }.andExpect {

@@ -146,6 +146,10 @@ class PropertyServiceImpl : PropertyService {
             throw InvalidPropertyConfigurationException("Rental duration is required for rental listings")
         }
 
+        // Reject FOR_SALE listings that specify a non-default furnishing status.
+        // We compare against UNFURNISHED (the DTO default) rather than null, because
+        // Jackson applies the default for both absent and null JSON values — so we
+        // cannot distinguish "client omitted the field" from "client sent UNFURNISHED".
         if (request.listingType == ListingType.FOR_SALE && request.furnishingStatus != FurnishingStatus.UNFURNISHED) {
             throw InvalidPropertyConfigurationException("Furnishing status is only applicable for rental listings")
         }
