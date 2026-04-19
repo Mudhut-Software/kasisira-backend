@@ -15,6 +15,7 @@ import com.mudhut.software.kasisira.utils.exceptions.InviteExpiredException
 import com.mudhut.software.kasisira.utils.exceptions.InviteRevokedException
 import com.mudhut.software.kasisira.utils.exceptions.OrgNotFoundException
 import com.mudhut.software.kasisira.utils.exceptions.UserNotFoundException
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -33,7 +34,8 @@ class InviteServiceImpl(
     private val notificationService: NotificationService,
     private val passwordEncoder: PasswordEncoder,
     private val objectMapper: ObjectMapper,
-    private val clock: Clock
+    private val clock: Clock,
+    @Value("\${app.frontend.url}") private val frontendUrl: String
 ) : InviteService {
 
     private val rng = SecureRandom()
@@ -68,7 +70,7 @@ class InviteServiceImpl(
             expiresAt = clock.instant().plus(expiry)
         ))
 
-        val acceptUrl = "/accept-invite?token=$rawToken"
+        val acceptUrl = "$frontendUrl/accept-invite?token=$rawToken"
         val payload = mapOf<String, Any>(
             "orgName"   to org.name,
             "acceptUrl" to acceptUrl,

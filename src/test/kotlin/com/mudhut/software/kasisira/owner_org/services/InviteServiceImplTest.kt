@@ -17,13 +17,13 @@ import com.mudhut.software.kasisira.utils.exceptions.InviteAlreadyUsedException
 import com.mudhut.software.kasisira.utils.exceptions.InviteExpiredException
 import io.mockk.Runs
 import io.mockk.every
-import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
 import io.mockk.junit5.MockKExtension
 import io.mockk.just
 import io.mockk.verify
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -44,7 +44,24 @@ class InviteServiceImplTest {
     @MockK private lateinit var passwordEncoder: PasswordEncoder
     private val objectMapper = ObjectMapper()
     private val clock: Clock = Clock.fixed(Instant.parse("2026-05-01T10:00:00Z"), ZoneOffset.UTC)
-    @InjectMockKs private lateinit var service: InviteServiceImpl
+    private val frontendUrl = "http://localhost:3000"
+    private lateinit var service: InviteServiceImpl
+
+    @BeforeEach
+    fun setup() {
+        service = InviteServiceImpl(
+            inviteRepository,
+            membershipRepository,
+            membershipService,
+            ownerOrgRepository,
+            userRepository,
+            notificationService,
+            passwordEncoder,
+            objectMapper,
+            clock,
+            frontendUrl
+        )
+    }
 
     private val inviter = User(id = 1L, username = "o", email = "o@x.com", provider = AuthProvider.LOCAL)
     private val invitee = User(id = 2L, username = "m", email = "m@x.com", provider = AuthProvider.LOCAL)
