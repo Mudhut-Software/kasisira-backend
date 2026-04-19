@@ -6,6 +6,7 @@ import com.mudhut.software.kasisira.owner_org.services.MembershipService
 import com.mudhut.software.kasisira.owner_org.services.OwnerOrgService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.properties.aProperty
 import com.mudhut.software.kasisira.properties.entities.*
 import com.mudhut.software.kasisira.properties.mappers.PropertyMapper
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
@@ -74,21 +75,10 @@ class PropertyServiceImplTest {
             name = "Test Org"
         )
 
-        testProperty = Property(
+        testProperty = aProperty(
             id = 1L,
             ownerOrg = testOrg,
-            title = "Beautiful House",
             description = "A beautiful house for sale",
-            propertyType = PropertyType.HOUSE,
-            listingType = ListingType.FOR_SALE,
-            price = BigDecimal("500000000"),
-            currency = "UGX",
-            city = "Kampala",
-            district = "Wakiso",
-            address = "123 Main Street",
-            latitude = BigDecimal("0.3476"),
-            longitude = BigDecimal("32.5825"),
-            status = PropertyStatus.DRAFT,
             createdAt = Instant.now(),
             updatedAt = Instant.now()
         )

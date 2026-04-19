@@ -3,6 +3,7 @@ package com.mudhut.software.kasisira.properties.repositories
 import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.properties.aProperty
 import com.mudhut.software.kasisira.properties.entities.*
 import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions
@@ -49,20 +50,8 @@ class PropertyRepositoryTest {
         )
         testOrg = entityManager.persistAndFlush(testOrg)
 
-        testProperty = Property(
-            id = 0,
+        testProperty = aProperty(
             ownerOrg = testOrg,
-            title = "Beautiful House",
-            description = "A beautiful house for sale in Kampala",
-            propertyType = PropertyType.HOUSE,
-            listingType = ListingType.FOR_SALE,
-            price = BigDecimal("500000000"),
-            currency = "UGX",
-            city = "Kampala",
-            district = "Wakiso",
-            address = "123 Main Street",
-            latitude = BigDecimal("0.3476"),
-            longitude = BigDecimal("32.5825"),
             bedrooms = 3,
             bathrooms = 2,
             status = PropertyStatus.ACTIVE
@@ -294,21 +283,11 @@ class PropertyRepositoryTest {
         fun `should count properties by owner`() {
             // Given
             entityManager.persistAndFlush(testProperty)
-            val anotherProperty = Property(
-                id = 0,
+            val anotherProperty = aProperty(
                 ownerOrg = testOrg,
                 title = "Another Property",
                 description = "Another property description",
-                propertyType = PropertyType.HOUSE,
-                listingType = ListingType.FOR_SALE,
-                price = BigDecimal("400000000"),
-                currency = "UGX",
-                city = "Kampala",
-                district = "Wakiso",
-                address = "123 Main Street",
-                latitude = BigDecimal("0.3476"),
-                longitude = BigDecimal("32.5825"),
-                status = PropertyStatus.DRAFT
+                price = BigDecimal("400000000")
             )
             entityManager.persistAndFlush(anotherProperty)
 
@@ -337,21 +316,11 @@ class PropertyRepositoryTest {
         fun `should count properties by owner and status`() {
             // Given
             entityManager.persistAndFlush(testProperty)
-            val draftProperty = Property(
-                id = 0,
+            val draftProperty = aProperty(
                 ownerOrg = testOrg,
                 title = "Draft Property",
                 description = "A draft property description",
-                propertyType = PropertyType.HOUSE,
-                listingType = ListingType.FOR_SALE,
-                price = BigDecimal("400000000"),
-                currency = "UGX",
-                city = "Kampala",
-                district = "Wakiso",
-                address = "123 Main Street",
-                latitude = BigDecimal("0.3476"),
-                longitude = BigDecimal("32.5825"),
-                status = PropertyStatus.DRAFT
+                price = BigDecimal("400000000")
             )
             entityManager.persistAndFlush(draftProperty)
 

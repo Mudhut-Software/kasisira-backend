@@ -3,6 +3,7 @@ package com.mudhut.software.kasisira.properties.mappers
 import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.properties.aProperty
 import com.mudhut.software.kasisira.properties.entities.*
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
 import com.mudhut.software.kasisira.properties.models.request.UpdatePropertyRequest
@@ -76,26 +77,13 @@ class PropertyMapperTest {
             createdAt = Instant.now()
         )
 
-        testProperty = Property(
+        testProperty = aProperty(
             id = 1L,
             ownerOrg = testOrg,
-            title = "Beautiful House",
             description = "A beautiful house for sale",
-            propertyType = PropertyType.HOUSE,
-            listingType = ListingType.FOR_SALE,
-            rentalDuration = null,
-            furnishingStatus = null,
-            price = BigDecimal("500000000"),
-            currency = "UGX",
-            city = "Kampala",
-            district = "Wakiso",
-            address = "123 Main Street",
-            latitude = BigDecimal("0.3476"),
-            longitude = BigDecimal("32.5825"),
             bedrooms = 3,
             bathrooms = 2,
             landSize = BigDecimal("500"),
-            landSizeUnit = "sqm",
             builtArea = BigDecimal("200"),
             yearBuilt = 2020,
             features = "parking,garden,security",
