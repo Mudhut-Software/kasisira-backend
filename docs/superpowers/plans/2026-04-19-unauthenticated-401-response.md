@@ -218,6 +218,7 @@ class RestAccessDeniedHandler(
     ) {
         response.status = HttpServletResponse.SC_FORBIDDEN
         response.contentType = MediaType.APPLICATION_JSON_VALUE
+        response.characterEncoding = "UTF-8"
         val body = ErrorResponse(
             errorCode = "AUTHORIZATION_ERROR",
             message = "You don't have permission to access this resource"
@@ -283,7 +284,7 @@ class SecurityChainIntegrationTest {
             content = objectMapper.writeValueAsString(CreateOrgRequest("My Org"))
         }.andExpect {
             status { isUnauthorized() }
-            content { contentType(MediaType.APPLICATION_JSON) }
+            content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
             jsonPath("$.errorCode") { value("AUTHENTICATION_ERROR") }
             jsonPath("$.message") { value("Authentication is required to access this resource") }
         }
@@ -411,7 +412,7 @@ Test methods to add inside the class:
             content = objectMapper.writeValueAsString(CreateOrgRequest("My Org"))
         }.andExpect {
             status { isUnauthorized() }
-            content { contentType(MediaType.APPLICATION_JSON) }
+            content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
             jsonPath("$.errorCode") { value("AUTHENTICATION_ERROR") }
         }
     }
@@ -420,7 +421,7 @@ Test methods to add inside the class:
     fun `GET orgs me without auth returns 401 JSON`() {
         mockMvc.get("/v1/orgs/me").andExpect {
             status { isUnauthorized() }
-            content { contentType(MediaType.APPLICATION_JSON) }
+            content { contentTypeCompatibleWith(MediaType.APPLICATION_JSON) }
             jsonPath("$.errorCode") { value("AUTHENTICATION_ERROR") }
         }
     }
