@@ -16,7 +16,7 @@ data class PropertySummaryResponse(
     val price: BigDecimal,
     val currency: String,
     val city: String,
-    val district: String?,
+    val district: String,
     val bedrooms: Int?,
     val bathrooms: Int?,
     val landSize: BigDecimal?,
