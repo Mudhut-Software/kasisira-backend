@@ -5,6 +5,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+          - "io.spring.dependency-management"
+      kotlin:
+        patterns:
+          - "org.jetbrains.kotlin:*"
 
   - package-ecosystem: "github-actions"
     directory: "/"
