@@ -3,6 +3,8 @@ package com.mudhut.software.kasisira.config
 import com.mudhut.software.kasisira.security.CustomUserDetailsService
 import com.mudhut.software.kasisira.security.JwtAuthenticationFilter
 import com.mudhut.software.kasisira.security.OAuth2AuthenticationSuccessHandler
+import com.mudhut.software.kasisira.security.RestAccessDeniedHandler
+import com.mudhut.software.kasisira.security.RestAuthenticationEntryPoint
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -32,6 +34,12 @@ class SecurityConfig {
 
     @Autowired
     private lateinit var oauth2AuthenticationSuccessHandler: OAuth2AuthenticationSuccessHandler
+
+    @Autowired
+    private lateinit var restAuthenticationEntryPoint: RestAuthenticationEntryPoint
+
+    @Autowired
+    private lateinit var restAccessDeniedHandler: RestAccessDeniedHandler
 
     @Bean
     fun jwtAuthenticationFilter(): JwtAuthenticationFilter {
@@ -75,6 +83,10 @@ class SecurityConfig {
             .cors { it.configurationSource(corsConfigurationSource()) }
             .csrf { it.disable() }
             .sessionManagement { it.sessionCreationPolicy(SessionCreationPolicy.STATELESS) }
+            .exceptionHandling {
+                it.authenticationEntryPoint(restAuthenticationEntryPoint)
+                it.accessDeniedHandler(restAccessDeniedHandler)
+            }
             .authorizeHttpRequests { authorize ->
                 authorize
                     // Public endpoints (paths are relative to context-path, so exclude /api prefix)
