@@ -1,5 +1,6 @@
 package com.mudhut.software.kasisira.properties.mappers
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
 import com.mudhut.software.kasisira.properties.entities.*
@@ -20,6 +21,7 @@ class PropertyMapperTest {
     private lateinit var propertyMapper: PropertyMapper
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
     private lateinit var testMedia: PropertyMedia
     private lateinit var testMediaResponse: PropertyMediaResponse
@@ -39,6 +41,15 @@ class PropertyMapperTest {
             emailVerified = true,
             isActive = true,
             isEnabled = true,
+            createdAt = Instant.now(),
+            updatedAt = Instant.now()
+        )
+
+        testOrg = OwnerOrg(
+            id = 10L,
+            creator = testUser,
+            name = "Test Org",
+            verifiedAt = null,
             createdAt = Instant.now(),
             updatedAt = Instant.now()
         )
@@ -67,7 +78,7 @@ class PropertyMapperTest {
 
         testProperty = Property(
             id = 1L,
-            owner = testUser,
+            ownerOrg = testOrg,
             title = "Beautiful House",
             description = "A beautiful house for sale",
             propertyType = PropertyType.HOUSE,
@@ -126,7 +137,7 @@ class PropertyMapperTest {
         }
 
         @Test
-        fun `should map owner correctly`() {
+        fun `should map org correctly`() {
             // Given
             every { propertyMediaMapper.toResponse(testMedia) } returns testMediaResponse
 
@@ -134,9 +145,23 @@ class PropertyMapperTest {
             val response = propertyMapper.toResponse(testProperty)
 
             // Then
-            assertEquals(testUser.id, response.owner.id)
-            assertEquals(testUser.username, response.owner.username)
-            assertEquals(testUser.imageUrl, response.owner.imageUrl)
+            assertEquals(testOrg.id, response.org.id)
+            assertEquals(testOrg.name, response.org.name)
+            assertEquals(false, response.org.isVerified)
+        }
+
+        @Test
+        fun `should map org as verified when verifiedAt is set`() {
+            // Given
+            val verifiedOrg = testOrg.copy(verifiedAt = Instant.now())
+            val propertyWithVerifiedOrg = testProperty.copy(ownerOrg = verifiedOrg)
+            every { propertyMediaMapper.toResponse(testMedia) } returns testMediaResponse
+
+            // When
+            val response = propertyMapper.toResponse(propertyWithVerifiedOrg)
+
+            // Then
+            assertEquals(true, response.org.isVerified)
         }
 
         @Test
@@ -260,11 +285,11 @@ class PropertyMapperTest {
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             assertEquals(0, property.id) // New entity
-            assertEquals(testUser, property.owner)
+            assertEquals(testOrg, property.ownerOrg)
             assertEquals(request.title, property.title)
             assertEquals(request.description, property.description)
             assertEquals(request.propertyType, property.propertyType)
@@ -291,7 +316,7 @@ class PropertyMapperTest {
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             assertEquals("parking,pool,garden", property.features)
@@ -311,7 +336,7 @@ class PropertyMapperTest {
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             Assertions.assertNull(property.features)
@@ -332,7 +357,7 @@ class PropertyMapperTest {
             )
 
             // When
-            val property = propertyMapper.fromCreateRequest(request, testUser)
+            val property = propertyMapper.fromCreateRequest(request, testOrg)
 
             // Then
             assertEquals(ListingType.FOR_RENT, property.listingType)

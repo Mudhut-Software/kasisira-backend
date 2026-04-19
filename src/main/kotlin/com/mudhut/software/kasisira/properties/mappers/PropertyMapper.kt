@@ -5,7 +5,7 @@ import com.mudhut.software.kasisira.properties.entities.Property
 import com.mudhut.software.kasisira.properties.entities.PropertyStatus
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
 import com.mudhut.software.kasisira.properties.models.request.UpdatePropertyRequest
-import com.mudhut.software.kasisira.properties.models.response.PropertyOwnerResponse
+import com.mudhut.software.kasisira.properties.models.response.PropertyOrgResponse
 import com.mudhut.software.kasisira.properties.models.response.PropertyResponse
 import com.mudhut.software.kasisira.properties.models.response.PropertySummaryResponse
 import org.springframework.stereotype.Component
@@ -18,10 +18,10 @@ class PropertyMapper(private val propertyMediaMapper: PropertyMediaMapper) {
 
         return PropertyResponse(
             id = property.id,
-            owner = PropertyOwnerResponse(
-                id = property.owner?.id ?: 0,
-                username = property.owner?.username ?: "",
-                imageUrl = property.owner?.imageUrl
+            org = PropertyOrgResponse(
+                id = property.ownerOrg.id,
+                name = property.ownerOrg.name,
+                isVerified = property.ownerOrg.verifiedAt != null
             ),
             title = property.title,
             description = property.description,

@@ -10,7 +10,7 @@ import java.time.Instant
 
 data class PropertyResponse(
     val id: Long,
-    val owner: PropertyOwnerResponse,
+    val org: PropertyOrgResponse,
     val title: String,
     val description: String,
     val propertyType: PropertyType,
