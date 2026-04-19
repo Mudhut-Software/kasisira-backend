@@ -1,8 +1,11 @@
 package com.mudhut.software.kasisira.properties.services
 
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
+import com.mudhut.software.kasisira.owner_org.entities.Permission
+import com.mudhut.software.kasisira.owner_org.services.MembershipService
+import com.mudhut.software.kasisira.owner_org.services.OwnerOrgService
 import com.mudhut.software.kasisira.profiles.entities.AuthProvider
 import com.mudhut.software.kasisira.profiles.entities.User
-import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.properties.entities.*
 import com.mudhut.software.kasisira.properties.mappers.PropertyMapper
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
@@ -13,9 +16,8 @@ import com.mudhut.software.kasisira.properties.models.response.PropertyResponse
 import com.mudhut.software.kasisira.properties.models.response.PropertySummaryResponse
 import com.mudhut.software.kasisira.properties.repositories.PropertyRepository
 import com.mudhut.software.kasisira.utils.exceptions.InvalidPropertyConfigurationException
+import com.mudhut.software.kasisira.utils.exceptions.PermissionDeniedException
 import com.mudhut.software.kasisira.utils.exceptions.PropertyNotFoundException
-import com.mudhut.software.kasisira.utils.exceptions.UnauthorizedAccessException
-import com.mudhut.software.kasisira.utils.exceptions.UserNotFoundException
 import io.mockk.*
 import io.mockk.impl.annotations.InjectMockKs
 import io.mockk.impl.annotations.MockK
@@ -36,15 +38,19 @@ class PropertyServiceImplTest {
     private lateinit var propertyRepository: PropertyRepository
 
     @MockK
-    private lateinit var userRepository: UserRepository
+    private lateinit var propertyMapper: PropertyMapper
 
     @MockK
-    private lateinit var propertyMapper: PropertyMapper
+    private lateinit var membershipService: MembershipService
+
+    @MockK
+    private lateinit var ownerOrgService: OwnerOrgService
 
     @InjectMockKs
     private lateinit var propertyService: PropertyServiceImpl
 
     private lateinit var testUser: User
+    private lateinit var testOrg: OwnerOrg
     private lateinit var testProperty: Property
     private lateinit var testPropertyResponse: PropertyResponse
     private lateinit var testPropertySummaryResponse: PropertySummaryResponse
@@ -62,9 +68,15 @@ class PropertyServiceImplTest {
             isEnabled = true
         )
 
+        testOrg = OwnerOrg(
+            id = 10L,
+            creator = testUser,
+            name = "Test Org"
+        )
+
         testProperty = Property(
             id = 1L,
-            owner = testUser,
+            ownerOrg = testOrg,
             title = "Beautiful House",
             description = "A beautiful house for sale",
             propertyType = PropertyType.HOUSE,
@@ -127,6 +139,10 @@ class PropertyServiceImplTest {
             viewCount = 0,
             createdAt = Instant.now()
         )
+
+        // Happy-path defaults: permission granted, org lookup returns testOrg.
+        every { membershipService.requirePermission(any(), any(), any()) } just Runs
+        every { ownerOrgService.getOrgById(any()) } returns testOrg
     }
 
     @Nested
@@ -150,28 +166,30 @@ class PropertyServiceImplTest {
         @Test
         fun `should create property successfully`() {
             // Given
-            every { userRepository.findById(1L) } returns Optional.of(testUser)
-            every { propertyMapper.fromCreateRequest(createRequest, testUser) } returns testProperty
+            every { propertyMapper.fromCreateRequest(createRequest, testOrg) } returns testProperty
             every { propertyRepository.save(any()) } returns testProperty
             every { propertyMapper.toResponse(testProperty) } returns testPropertyResponse
 
             // When
-            val result = propertyService.createProperty(1L, createRequest)
+            val result = propertyService.createProperty(1L, 10L, createRequest)
 
             // Then
             Assertions.assertNotNull(result)
             Assertions.assertEquals(testPropertyResponse, result)
+            verify { membershipService.requirePermission(1L, 10L, Permission.MANAGE_LISTINGS) }
             verify { propertyRepository.save(any()) }
         }
 
         @Test
-        fun `should throw UserNotFoundException when owner not found`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
-            every { userRepository.findById(999L) } returns Optional.empty()
+            every {
+                membershipService.requirePermission(999L, 10L, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UserNotFoundException> {
-                propertyService.createProperty(999L, createRequest)
+            assertThrows<PermissionDeniedException> {
+                propertyService.createProperty(999L, 10L, createRequest)
             }
         }
 
@@ -183,11 +201,10 @@ class PropertyServiceImplTest {
                 listingType = ListingType.FOR_RENT,
                 rentalDuration = RentalDuration.MONTHLY
             )
-            every { userRepository.findById(1L) } returns Optional.of(testUser)
 
             // When/Then
             assertThrows<InvalidPropertyConfigurationException> {
-                propertyService.createProperty(1L, invalidRequest)
+                propertyService.createProperty(1L, 10L, invalidRequest)
             }
         }
 
@@ -198,11 +215,10 @@ class PropertyServiceImplTest {
                 listingType = ListingType.FOR_RENT,
                 rentalDuration = null
             )
-            every { userRepository.findById(1L) } returns Optional.of(testUser)
 
             // When/Then
             assertThrows<InvalidPropertyConfigurationException> {
-                propertyService.createProperty(1L, invalidRequest)
+                propertyService.createProperty(1L, 10L, invalidRequest)
             }
         }
 
@@ -213,11 +229,10 @@ class PropertyServiceImplTest {
                 listingType = ListingType.FOR_SALE,
                 furnishingStatus = FurnishingStatus.FURNISHED
             )
-            every { userRepository.findById(1L) } returns Optional.of(testUser)
 
             // When/Then
             assertThrows<InvalidPropertyConfigurationException> {
-                propertyService.createProperty(1L, invalidRequest)
+                propertyService.createProperty(1L, 10L, invalidRequest)
             }
         }
 
@@ -234,13 +249,12 @@ class PropertyServiceImplTest {
                 rentalDuration = RentalDuration.MONTHLY,
                 furnishingStatus = FurnishingStatus.FURNISHED
             )
-            every { userRepository.findById(1L) } returns Optional.of(testUser)
-            every { propertyMapper.fromCreateRequest(rentalRequest, testUser) } returns rentalProperty
+            every { propertyMapper.fromCreateRequest(rentalRequest, testOrg) } returns rentalProperty
             every { propertyRepository.save(any()) } returns rentalProperty
             every { propertyMapper.toResponse(rentalProperty) } returns testPropertyResponse
 
             // When
-            val result = propertyService.createProperty(1L, rentalRequest)
+            val result = propertyService.createProperty(1L, 10L, rentalRequest)
 
             // Then
             Assertions.assertNotNull(result)
@@ -305,6 +319,7 @@ class PropertyServiceImplTest {
 
             // Then
             Assertions.assertNotNull(result)
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify { propertyRepository.save(any()) }
         }
 
@@ -320,12 +335,15 @@ class PropertyServiceImplTest {
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyRepository.findById(1L) } returns Optional.of(testProperty)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyService.updateProperty(1L, 999L, updateRequest)
             }
         }
@@ -345,6 +363,7 @@ class PropertyServiceImplTest {
             propertyService.deleteProperty(1L, 1L)
 
             // Then
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify { propertyRepository.delete(testProperty) }
         }
 
@@ -360,31 +379,34 @@ class PropertyServiceImplTest {
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyRepository.findById(1L) } returns Optional.of(testProperty)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyService.deleteProperty(1L, 999L)
             }
         }
     }
 
     @Nested
-    @DisplayName("getPropertiesByOwner tests")
-    inner class GetPropertiesByOwnerTests {
+    @DisplayName("getPropertiesByOrg tests")
+    inner class GetPropertiesByOrgTests {
 
         @Test
-        fun `should return properties for owner`() {
+        fun `should return properties for org`() {
             // Given
             val pageable = PageRequest.of(0, 20)
             val page = PageImpl(listOf(testProperty))
-            every { propertyRepository.findByOwnerId(1L, pageable) } returns page
+            every { propertyRepository.findByOwnerOrgId(10L, pageable) } returns page
             every { propertyMapper.toSummaryResponse(testProperty) } returns testPropertySummaryResponse
 
             // When
-            val result = propertyService.getPropertiesByOwner(1L, pageable)
+            val result = propertyService.getPropertiesByOrg(10L, pageable)
 
             // Then
             Assertions.assertEquals(1, result.totalElements)
@@ -395,10 +417,10 @@ class PropertyServiceImplTest {
             // Given
             val pageable = PageRequest.of(0, 20)
             val emptyPage = PageImpl<Property>(emptyList())
-            every { propertyRepository.findByOwnerId(1L, pageable) } returns emptyPage
+            every { propertyRepository.findByOwnerOrgId(10L, pageable) } returns emptyPage
 
             // When
-            val result = propertyService.getPropertiesByOwner(1L, pageable)
+            val result = propertyService.getPropertiesByOrg(10L, pageable)
 
             // Then
             Assertions.assertEquals(0, result.totalElements)
@@ -460,36 +482,40 @@ class PropertyServiceImplTest {
 
             // Then
             Assertions.assertNotNull(result)
+            verify { membershipService.requirePermission(1L, testOrg.id, Permission.MANAGE_LISTINGS) }
             verify { propertyRepository.save(any()) }
         }
 
         @Test
-        fun `should throw UnauthorizedAccessException when not owner`() {
+        fun `should throw PermissionDeniedException when caller lacks MANAGE_LISTINGS`() {
             // Given
             every { propertyRepository.findById(1L) } returns Optional.of(testProperty)
+            every {
+                membershipService.requirePermission(999L, testOrg.id, Permission.MANAGE_LISTINGS)
+            } throws PermissionDeniedException("no permission")
 
             // When/Then
-            assertThrows<UnauthorizedAccessException> {
+            assertThrows<PermissionDeniedException> {
                 propertyService.updatePropertyStatus(1L, 999L, PropertyStatus.ACTIVE)
             }
         }
     }
 
     @Nested
-    @DisplayName("getPropertyStatsByOwner tests")
-    inner class GetPropertyStatsByOwnerTests {
+    @DisplayName("getPropertyStatsByOrg tests")
+    inner class GetPropertyStatsByOrgTests {
 
         @Test
-        fun `should return property stats for owner`() {
+        fun `should return property stats for org`() {
             // Given
-            every { propertyRepository.countByOwnerId(1L) } returns 10
-            every { propertyRepository.countByOwnerIdAndStatus(1L, PropertyStatus.ACTIVE) } returns 5
-            every { propertyRepository.countByOwnerIdAndStatus(1L, PropertyStatus.DRAFT) } returns 3
-            every { propertyRepository.countByOwnerIdAndStatus(1L, PropertyStatus.SOLD) } returns 1
-            every { propertyRepository.countByOwnerIdAndStatus(1L, PropertyStatus.RENTED) } returns 1
+            every { propertyRepository.countByOwnerOrgId(10L) } returns 10
+            every { propertyRepository.countByOwnerOrgIdAndStatus(10L, PropertyStatus.ACTIVE) } returns 5
+            every { propertyRepository.countByOwnerOrgIdAndStatus(10L, PropertyStatus.DRAFT) } returns 3
+            every { propertyRepository.countByOwnerOrgIdAndStatus(10L, PropertyStatus.SOLD) } returns 1
+            every { propertyRepository.countByOwnerOrgIdAndStatus(10L, PropertyStatus.RENTED) } returns 1
 
             // When
-            val result = propertyService.getPropertyStatsByOwner(1L)
+            val result = propertyService.getPropertyStatsByOrg(10L)
 
             // Then
             Assertions.assertEquals(10L, result["total"])

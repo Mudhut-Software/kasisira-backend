@@ -1,5 +1,8 @@
 package com.mudhut.software.kasisira.properties.services
 
+import com.mudhut.software.kasisira.owner_org.entities.Permission
+import com.mudhut.software.kasisira.owner_org.services.MembershipService
+import com.mudhut.software.kasisira.owner_org.services.OwnerOrgService
 import com.mudhut.software.kasisira.properties.entities.ListingType
 import com.mudhut.software.kasisira.properties.entities.PropertyStatus
 import com.mudhut.software.kasisira.properties.entities.PropertyType
@@ -10,11 +13,8 @@ import com.mudhut.software.kasisira.properties.models.request.UpdatePropertyRequ
 import com.mudhut.software.kasisira.properties.models.response.PropertyResponse
 import com.mudhut.software.kasisira.properties.models.response.PropertySummaryResponse
 import com.mudhut.software.kasisira.properties.repositories.PropertyRepository
-import com.mudhut.software.kasisira.profiles.repositories.UserRepository
 import com.mudhut.software.kasisira.utils.exceptions.InvalidPropertyConfigurationException
 import com.mudhut.software.kasisira.utils.exceptions.PropertyNotFoundException
-import com.mudhut.software.kasisira.utils.exceptions.UnauthorizedAccessException
-import com.mudhut.software.kasisira.utils.exceptions.UserNotFoundException
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -29,18 +29,21 @@ class PropertyServiceImpl : PropertyService {
     private lateinit var propertyRepository: PropertyRepository
 
     @Autowired
-    private lateinit var userRepository: UserRepository
-
-    @Autowired
     private lateinit var propertyMapper: PropertyMapper
 
-    override fun createProperty(ownerId: Long, request: CreatePropertyRequest): PropertyResponse {
-        val owner = userRepository.findById(ownerId)
-            .orElseThrow { UserNotFoundException("User with id $ownerId not found") }
+    @Autowired
+    private lateinit var membershipService: MembershipService
+
+    @Autowired
+    private lateinit var ownerOrgService: OwnerOrgService
+
+    override fun createProperty(callerUserId: Long, orgId: Long, request: CreatePropertyRequest): PropertyResponse {
+        membershipService.requirePermission(callerUserId, orgId, Permission.MANAGE_LISTINGS)
+        val org = ownerOrgService.getOrgById(orgId)
 
         validatePropertyRequest(request)
 
-        val property = propertyMapper.fromCreateRequest(request, owner)
+        val property = propertyMapper.fromCreateRequest(request, org)
         val savedProperty = propertyRepository.save(property)
 
         return propertyMapper.toResponse(savedProperty)
@@ -52,13 +55,11 @@ class PropertyServiceImpl : PropertyService {
         return propertyMapper.toResponse(property)
     }
 
-    override fun updateProperty(id: Long, ownerId: Long, request: UpdatePropertyRequest): PropertyResponse {
+    override fun updateProperty(id: Long, callerUserId: Long, request: UpdatePropertyRequest): PropertyResponse {
         val property = propertyRepository.findById(id)
             .orElseThrow { PropertyNotFoundException("Property with id $id not found") }
 
-        if (property.owner?.id != ownerId) {
-            throw UnauthorizedAccessException("You are not authorized to update this property")
-        }
+        membershipService.requirePermission(callerUserId, property.ownerOrg.id, Permission.MANAGE_LISTINGS)
 
         val updatedProperty = propertyMapper.applyUpdate(property, request)
         val savedProperty = propertyRepository.save(updatedProperty)
@@ -66,19 +67,17 @@ class PropertyServiceImpl : PropertyService {
         return propertyMapper.toResponse(savedProperty)
     }
 
-    override fun deleteProperty(id: Long, ownerId: Long) {
+    override fun deleteProperty(id: Long, callerUserId: Long) {
         val property = propertyRepository.findById(id)
             .orElseThrow { PropertyNotFoundException("Property with id $id not found") }
 
-        if (property.owner?.id != ownerId) {
-            throw UnauthorizedAccessException("You are not authorized to delete this property")
-        }
+        membershipService.requirePermission(callerUserId, property.ownerOrg.id, Permission.MANAGE_LISTINGS)
 
         propertyRepository.delete(property)
     }
 
-    override fun getPropertiesByOwner(ownerId: Long, pageable: Pageable): Page<PropertySummaryResponse> {
-        return propertyRepository.findByOwnerId(ownerId, pageable)
+    override fun getPropertiesByOrg(orgId: Long, pageable: Pageable): Page<PropertySummaryResponse> {
+        return propertyRepository.findByOwnerOrgId(orgId, pageable)
             .map { propertyMapper.toSummaryResponse(it) }
     }
 
@@ -110,13 +109,11 @@ class PropertyServiceImpl : PropertyService {
             .map { propertyMapper.toSummaryResponse(it) }
     }
 
-    override fun updatePropertyStatus(id: Long, ownerId: Long, status: PropertyStatus): PropertyResponse {
+    override fun updatePropertyStatus(id: Long, callerUserId: Long, status: PropertyStatus): PropertyResponse {
         val property = propertyRepository.findById(id)
             .orElseThrow { PropertyNotFoundException("Property with id $id not found") }
 
-        if (property.owner?.id != ownerId) {
-            throw UnauthorizedAccessException("You are not authorized to update this property")
-        }
+        membershipService.requirePermission(callerUserId, property.ownerOrg.id, Permission.MANAGE_LISTINGS)
 
         val updatedProperty = property.copy(status = status)
         val savedProperty = propertyRepository.save(updatedProperty)
@@ -129,13 +126,13 @@ class PropertyServiceImpl : PropertyService {
         propertyRepository.incrementViewCount(id)
     }
 
-    override fun getPropertyStatsByOwner(ownerId: Long): Map<String, Any> {
+    override fun getPropertyStatsByOrg(orgId: Long): Map<String, Any> {
         return mapOf(
-            "total" to propertyRepository.countByOwnerId(ownerId),
-            "active" to propertyRepository.countByOwnerIdAndStatus(ownerId, PropertyStatus.ACTIVE),
-            "draft" to propertyRepository.countByOwnerIdAndStatus(ownerId, PropertyStatus.DRAFT),
-            "sold" to propertyRepository.countByOwnerIdAndStatus(ownerId, PropertyStatus.SOLD),
-            "rented" to propertyRepository.countByOwnerIdAndStatus(ownerId, PropertyStatus.RENTED)
+            "total" to propertyRepository.countByOwnerOrgId(orgId),
+            "active" to propertyRepository.countByOwnerOrgIdAndStatus(orgId, PropertyStatus.ACTIVE),
+            "draft" to propertyRepository.countByOwnerOrgIdAndStatus(orgId, PropertyStatus.DRAFT),
+            "sold" to propertyRepository.countByOwnerOrgIdAndStatus(orgId, PropertyStatus.SOLD),
+            "rented" to propertyRepository.countByOwnerOrgIdAndStatus(orgId, PropertyStatus.RENTED)
         )
     }
 

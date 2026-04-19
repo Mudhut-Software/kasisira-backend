@@ -1,6 +1,6 @@
 package com.mudhut.software.kasisira.properties.mappers
 
-import com.mudhut.software.kasisira.profiles.entities.User
+import com.mudhut.software.kasisira.owner_org.entities.OwnerOrg
 import com.mudhut.software.kasisira.properties.entities.Property
 import com.mudhut.software.kasisira.properties.entities.PropertyStatus
 import com.mudhut.software.kasisira.properties.models.request.CreatePropertyRequest
@@ -83,10 +83,10 @@ class PropertyMapper(private val propertyMediaMapper: PropertyMediaMapper) {
         return properties.map { toSummaryResponse(it) }
     }
 
-    fun fromCreateRequest(request: CreatePropertyRequest, owner: User): Property {
+    fun fromCreateRequest(request: CreatePropertyRequest, org: OwnerOrg): Property {
         return Property(
             id = 0,
-            owner = owner,
+            ownerOrg = org,
             title = request.title,
             description = request.description,
             propertyType = request.propertyType,

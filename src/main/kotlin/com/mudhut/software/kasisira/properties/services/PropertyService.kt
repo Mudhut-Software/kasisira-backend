@@ -13,15 +13,15 @@ import org.springframework.data.domain.Pageable
 
 interface PropertyService {
 
-    fun createProperty(ownerId: Long, request: CreatePropertyRequest): PropertyResponse
+    fun createProperty(callerUserId: Long, orgId: Long, request: CreatePropertyRequest): PropertyResponse
 
     fun getPropertyById(id: Long): PropertyResponse
 
-    fun updateProperty(id: Long, ownerId: Long, request: UpdatePropertyRequest): PropertyResponse
+    fun updateProperty(id: Long, callerUserId: Long, request: UpdatePropertyRequest): PropertyResponse
 
-    fun deleteProperty(id: Long, ownerId: Long)
+    fun deleteProperty(id: Long, callerUserId: Long)
 
-    fun getPropertiesByOwner(ownerId: Long, pageable: Pageable): Page<PropertySummaryResponse>
+    fun getPropertiesByOrg(orgId: Long, pageable: Pageable): Page<PropertySummaryResponse>
 
     fun searchProperties(request: PropertySearchRequest, pageable: Pageable): Page<PropertySummaryResponse>
 
@@ -31,9 +31,9 @@ interface PropertyService {
 
     fun getPropertiesByListingType(listingType: ListingType, pageable: Pageable): Page<PropertySummaryResponse>
 
-    fun updatePropertyStatus(id: Long, ownerId: Long, status: PropertyStatus): PropertyResponse
+    fun updatePropertyStatus(id: Long, callerUserId: Long, status: PropertyStatus): PropertyResponse
 
     fun incrementViewCount(id: Long)
 
-    fun getPropertyStatsByOwner(ownerId: Long): Map<String, Any>
+    fun getPropertyStatsByOrg(orgId: Long): Map<String, Any>
 }
