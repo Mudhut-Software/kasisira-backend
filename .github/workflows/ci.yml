@@ -35,6 +35,13 @@ jobs:
       SPRING_PROFILES_ACTIVE: testing
       TEST_DB_USERNAME: postgres
       TEST_DB_PASSWORD: postgres
+      # Dummy values — tests never exercise real tokens/mail; Spring just needs
+      # the placeholders in application.properties resolvable during context load.
+      JWT_SECRET: ci-test-secret-that-is-at-least-256-bits-long-for-hs256-algorithm
+      ACCESS_TOKEN_EXPIRY_IN_MILLIS: '3600000'
+      REFRESH_TOKEN_EXPIRY_IN_MILLIS: '604800000'
+      EMAIL_USERNAME: ci@example.com
+      EMAIL_PASSWORD: ci-placeholder
 
     steps:
       - name: Checkout
