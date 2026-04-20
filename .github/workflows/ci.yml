@@ -6,6 +6,9 @@ on:
   push:
     branches: [develop, main]
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -57,7 +60,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Run tests
-        run: ./gradlew test --no-daemon
+        run: ./gradlew test
 
       - name: Upload test reports
         if: failure()

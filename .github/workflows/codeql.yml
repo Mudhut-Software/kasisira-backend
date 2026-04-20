@@ -45,8 +45,8 @@ jobs:
         with:
           languages: ${{ matrix.language }}
 
-      - name: Compile for CodeQL
-        run: ./gradlew --no-daemon -x test compileKotlin compileTestKotlin
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v3
