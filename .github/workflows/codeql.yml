@@ -1,0 +1,48 @@
+name: CodeQL
+
+# Runs on merges to develop/main plus a weekly sweep. Not on PRs — CodeQL
+# is source-level and slow relative to the test suite; keeping it off the
+# PR critical path avoids blocking merges on a tool that's a continuous
+# watch, not a merge gate.
+on:
+  push:
+    branches: [develop, main]
+  schedule:
+    - cron: '0 6 * * 1'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [java-kotlin]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # build-mode: none tells CodeQL to extract directly from source
+      # rather than intercepting a compile. Kotlin and Java are both
+      # supported. This skips the ~5-8 minute Gradle build entirely.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
